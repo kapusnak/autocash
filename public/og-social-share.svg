@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#166534"/>
+      <stop offset="0.5" stop-color="#0d3d32"/>
+      <stop offset="1" stop-color="#052e26"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="980" cy="120" r="220" fill="#a3e635" opacity="0.12"/>
+  <circle cx="160" cy="520" r="180" fill="#ecfdf5" opacity="0.08"/>
+  <text x="80" y="280" fill="#ecfdf5" font-family="system-ui,sans-serif" font-size="96" font-weight="800">Autocash</text>
+  <text x="80" y="360" fill="#a3e635" font-family="system-ui,sans-serif" font-size="40" font-weight="600">Peníze za auto. Jezdíte dál.</text>
+  <text x="80" y="430" fill="#d1fae5" font-family="system-ui,sans-serif" font-size="28" opacity="0.9">Hotovost do 24 hodin · Celá R</text>
+</svg>
