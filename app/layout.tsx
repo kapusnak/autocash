@@ -1,20 +1,20 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { DM_Sans, Syne } from "next/font/google"
+import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google"
 import { AppToaster } from "@/components/app-toaster"
 import { GoogleAdsGtag } from "@/components/google-ads-gtag"
 import { GoogleAnalytics } from "@/components/google-analytics"
 import { GoogleTagManager } from "@/components/google-tag-manager"
 import "./globals.css"
 
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-plus-jakarta",
   display: "swap",
 })
 
 const dmSans = DM_Sans({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-dm-sans",
   display: "swap",
 })
@@ -57,7 +57,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="cs">
-      <body className={`${syne.variable} ${dmSans.variable} font-sans antialiased`}>
+      <body className={`${plusJakarta.variable} ${dmSans.variable} font-sans antialiased`}>
         <GoogleTagManager />
         <GoogleAdsGtag />
         {children}

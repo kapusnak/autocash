@@ -88,7 +88,7 @@ export default function Home() {
               <p className="font-display text-gold text-sm sm:text-base font-bold tracking-wide uppercase">
                 Autocash
               </p>
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.1] text-balance">
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.18] text-balance">
                 Potřebujete peníze.
                 <span className="block text-gold mt-1">Auto nemusíte prodat napořád.</span>
               </h1>
