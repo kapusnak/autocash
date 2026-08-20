@@ -15,7 +15,7 @@ export function SiteFooter() {
               <span className="font-display text-2xl font-bold">Autocash</span>
             </div>
             <p className="text-primary-foreground/75 text-sm leading-relaxed max-w-xs">
-              Zprostředkujeme vám hotovost za hodnotu auta. S vozem přitom můžete dál jezdit.
+              Vyplatíme vám hotovost za hodnotu auta. S vozem přitom můžete dál jezdit.
             </p>
             <div className="mt-5">
               <ZivefirmyBadge variant="dark" />
@@ -89,7 +89,7 @@ export function SiteFooter() {
         <div className="mt-10 border-t border-white/15 pt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-primary-foreground/55">
           <p>© {new Date().getFullYear()} Autocash. Všechna práva vyhrazena.</p>
           <p>
-            Nejde o spotřebitelský úvěr. Autocash pouze zprostředkovává poptávky — smlouvu s vámi uzavírá poskytovatel.
+            Nejde o spotřebitelský úvěr. Smlouvu uzavíráme s vámi a auto dál používáte.
           </p>
         </div>
       </div>

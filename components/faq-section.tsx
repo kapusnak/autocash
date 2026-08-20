@@ -11,22 +11,22 @@ const faqs = [
   {
     question: "Můžu s autem po přepisu dál jezdit?",
     answer:
-      "Ano. Přepis na poskytovatele slouží jen k tomu, aby bylo financování zajištěné vozidlem. Vy zůstáváte provozovatelem a vůz používáte jako dřív.",
+      "Ano. Vůz se přepíše na nás jen proto, aby byla dohoda zajištěná. Vy zůstáváte provozovatelem a auto používáte jako dřív.",
   },
   {
     question: "Kolik peněz můžu získat?",
     answer:
-      "Záleží na značce, roku výroby, stavu a nájezdu. Konkrétní nabídku vám připraví poskytovatel po ocenění vozu — na webu slibovat přesné procento z ceny nedává smysl.",
+      "Záleží na značce, roku výroby, stavu a nájezdu. Konkrétní nabídku vám připravíme po ocenění vozu — na webu slibovat přesné procento z ceny nedává smysl.",
   },
   {
     question: "Jak rychle dostanu peníze?",
     answer:
-      "Jakmile se s poskytovatelem dohodnete na částce a podepíšete smlouvu, peníze obvykle dorazí na účet do 24 hodin.",
+      "Jakmile se dohodneme na částce a podepíšete smlouvu, peníze obvykle dorazí na účet do 24 hodin.",
   },
   {
     question: "Jedná se o půjčku nebo úvěr?",
     answer:
-      "Ne, nejde o spotřebitelský úvěr. Autocash vám zprostředkuje poptávku u poskytovatele, který s vámi uzavře smlouvu a vyplatí peníze.",
+      "Ne, nejde o spotřebitelský úvěr. Za hodnotu auta vám vyplatíme hotovost a vy s vozem dál jezdíte.",
   },
 ]
 

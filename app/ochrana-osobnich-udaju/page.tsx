@@ -35,8 +35,7 @@ export default function OchranaOsobnichUdajuPage() {
               <strong className="text-foreground">{SITE.controller.name}</strong>, IČ: {SITE.controller.ico}, se
               sídlem {SITE.controller.address} (dále jen &quot;Provozovatel&quot; nebo &quot;my&quot;), jako správce
               osobních údajů, zpracovává vaše osobní údaje v souladu s nařízením (EU) 2016/679 (GDPR) a dalšími
-              platnými právními předpisy. Tyto stránky Autocash slouží výhradně ke zprostředkování poptávek na
-              financování zajištěné vozidlem.
+              platnými právními předpisy. Tyto stránky Autocash slouží k poptávkám na financování zajištěné vozidlem.
             </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
@@ -68,8 +67,7 @@ export default function OchranaOsobnichUdajuPage() {
               4. Účely a právní základ zpracování
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
-              Vaše údaje slouží k posouzení, zprostředkování a vytvoření nabídky na služby zajištěného financování
-              vozidly.
+              Vaše údaje slouží k posouzení poptávky a přípravě nabídky na služby zajištěného financování vozidly.
             </p>
             <ul className="list-disc pl-6 text-base text-muted-foreground leading-relaxed space-y-2 mb-6">
               <li>
@@ -86,7 +84,7 @@ export default function OchranaOsobnichUdajuPage() {
               5. Předání osobních údajů třetím stranám
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
-              Pro účely posouzení poptávky, přípravy nabídky a zprostředkování služeb zajištěných vozidlem můžeme vaše
+              Pro účely posouzení poptávky a přípravy nabídky můžeme vaše
               osobní údaje předat <strong className="text-foreground">smluvním partnerům</strong> (příjemcům údajů), se
               kterými spolupracujeme. Jedná se zejména o podnikatele působící v oblasti služeb souvisejících s vozidly
               a zajištěným financováním. Konkrétní identitu příjemce vám v případě předání údajů obvykle sdělíme v
@@ -102,7 +100,7 @@ export default function OchranaOsobnichUdajuPage() {
               6. Doba uchování údajů
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
-              Osobní údaje jsou uchovávány po dobu nezbytně nutnou ke zprostředkování nabídky a komunikaci s klientem,
+              Osobní údaje jsou uchovávány po dobu nezbytně nutnou ke zpracování nabídky a komunikaci s klientem,
               nejdéle však po dobu 6 měsíců, pokud nebude zahájena smluvní spolupráce.
             </p>
 

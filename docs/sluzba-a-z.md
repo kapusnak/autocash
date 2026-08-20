@@ -10,21 +10,21 @@ Poslední rešerše partnerů: srpen 2026 (weby Chytrá autozástava, AutoKapita
 
 Autocash **neposkytuje kapitál**. Přes web a reklamu hledá lidi, kteří chtějí rychle peníze a mají auto. Lead jde do interní selekce / aukce. Jeden ze tří partnerů pak s klientem podepíše smlouvu, vyplatí peníze a servisuje vztah. Autocash je odměněn procentuální komisí za dohozený deal.
 
-Veřejně to klient vnímá jako: *potřebuju peníze, mám auto, chci jezdit dál, vyplním formulář.* Smlouvu, výplatu a detaily podmínek řeší poskytovatel.
+Veřejný web mluví v první osobě: *my oceníme, my vyplatíme, smlouvu uzavřeme s vámi.* Partnery a slovo „poskytovatel“ na webu neuvádíme.
 
-Právní rámec (konsenzus partnerů, footer Autocash): **nejde o spotřebitelský úvěr ani půjčku** ve smyslu zákona č. 257/2016 Sb. Jde o odkup / zajištění vozidlem (výkup se zpětným odkupem, nebo zpětný leasing). Autocash **zprostředkovává poptávky**.
+Právní rámec (konsenzus partnerů): **nejde o spotřebitelský úvěr ani půjčku** ve smyslu zákona č. 257/2016 Sb. Jde o odkup / zajištění vozidlem (výkup se zpětným odkupem, nebo zpětný leasing). Interně Autocash **zprostředkovává poptávky**; navenek to neříkáme.
 
 ---
 
-## 2. Společný základ (to smí říkat i web)
+## 2. Společný základ (to smí říkat i web — jako „my“)
 
-- Není to banka. Rozhoduje **hodnota vozu**, ne registry a výplatní pásky.
-- Vůz se **přepisuje** na poskytovatele. Klient zůstává **provozovatelem** a typicky **jezdí dál**.
+- Nejsme banka. Rozhoduje **hodnota vozu**, ne registry a výplatní pásky.
+- Vůz se **přepisuje na nás**. Klient zůstává **provozovatelem** a typicky **jezdí dál**.
 - Peníze obvykle **do 24 hodin po ocenění a podpisu**.
-- **Zpětný odkup** je možný. Cena, doba, poplatky a splátky **až u partnera**.
+- **Zpětný odkup** je možný. Konkrétní cenu, dobu a poplatky řekneme až po ocenění.
 - Potřeba: žadatel je **majitel v TP**, fotky vozu + OP + TP, české značky, pojízdné auto.
 - Často se **nebere**: insolvence, žadatel není vlastník, nepojízdné, zahraniční RZ.
-- Exekuce / leasing / úvěr na auto = **individuálně** (partneři se liší).
+- Exekuce / leasing / úvěr na auto = **individuálně**.
 
 ---
 
@@ -198,15 +198,15 @@ Co rozhoduje, kterému partnerovi lead nabídnout (a kdo ho vezme):
 
 ### Povolené (web, ads, telefon)
 
-Psát přirozené české věty, ne hesla z překladače. Inspirace u poskytovatelů: „peníze za auto a jezděte dál“, „zůstáváte provozovatelem“, „vůz se dočasně přepíše“.
+Psát přirozené české věty v první osobě. Na webu **neříkáme** „poskytovatel“, „zprostředkujeme“ ani nejmenujeme partnery. Mluvíme jako Autocash: oceníme, vyplatíme, smlouvu uzavřeme s vámi.
 
 - Získejte peníze za auto a jezděte s ním dál.
-- Za hodnotu vozu vám poskytovatel vyplatí hotovost a vy auto dál používáte.
-- V technickém průkazu zůstáváte provozovatelem — vůz se jen dočasně přepíše.
+- Za hodnotu vozu vám vyplatíme hotovost a vy auto dál používáte.
+- V technickém průkazu zůstáváte provozovatelem — vůz se jen dočasně přepíše na nás.
 - Peníze míváte na účtu do 24 hodin od podpisu smlouvy.
 - Bez dokládání příjmů, po celé ČR.
-- Částka podle vozu. Konkrétní nabídku připraví poskytovatel po ocenění.
-- Nejde o spotřebitelský úvěr. Autocash pouze zprostředkovává poptávky.
+- Částka podle vozu. Konkrétní nabídku připravíme po ocenění.
+- Nejde o spotřebitelský úvěr.
 
 ### Zakázané jako univerzální fakt
 
@@ -218,6 +218,7 @@ Psát přirozené české věty, ne hesla z překladače. Inspirace u poskytovat
 - Nenahlížíme do registrů jako 100% pravda u každého dealu
 - „My vám půjčíme“ / „náš úvěr“
 - Jména a loga partnerů na marketingovém webu
+- Slovo „poskytovatel“ a formulace „předáme vás / zprostředkujeme poptávku“ na veřejném webu
 - Srovnávací tabulka 90 % vs. 40–60 %
 - Telegrafická čeština bez vět: „Přepis je zajištění“, „Autem jezdíte dál.“, „Auto, klíče, ježdění“
 
