@@ -2,16 +2,21 @@ export function StayVsChange() {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mění se</p>
-        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Vlastník v TP</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Přepis je zajištění. Papír, ne klíče.</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Co se změní</p>
+        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Vlastník v technickém průkazu</h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Vůz se dočasně přepíše na poskytovatele. Tím je dohoda zajištěná — nejde o to, že byste auto odevzdali do
+          bazaru nebo přišli o klíče.
+        </p>
         <TpSketch />
       </article>
 
       <article className="rounded-2xl border border-primary/20 bg-card p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wider text-primary">Zůstává</p>
-        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Auto, klíče, ježdění</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Provozovatel jste vy. Vůz používáte dál.</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-primary">Co zůstane stejné</p>
+        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Jezdíte dál jako dřív</h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Klíče máte u sebe, autem jezdíte podle potřeby a v technickém průkazu zůstáváte zapsaní jako provozovatel.
+        </p>
         <StaySketch />
       </article>
     </div>
@@ -30,7 +35,7 @@ function TpSketch() {
         Vlastník
       </text>
       <text className="tp-owner" x="30" y="70" fontSize="11" fill="currentColor" fontFamily="system-ui">
-        poskytovatel
+        nový vlastník
       </text>
       <path d="M152 48h28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
       <path d="M174 40l8 8-8 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />

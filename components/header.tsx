@@ -48,7 +48,7 @@ export function Header() {
               className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-gold-foreground shadow-md transition-all hover:bg-gold/90 active:scale-[0.98]"
             >
               <Car className="w-4 h-4" />
-              Chci peníze
+              Chci peníze za auto
             </a>
           </nav>
         </div>
@@ -79,7 +79,7 @@ export function Header() {
               className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-gold px-4 py-3 text-sm font-bold text-gold-foreground"
             >
               <Car className="w-4 h-4" />
-              Chci nabídku
+              Chci peníze za auto
             </a>
           </div>
         </nav>

@@ -121,7 +121,8 @@ export default function KontaktyPage() {
                   </div>
                 </div>
                 <p className="mt-8 text-xs text-muted-foreground leading-relaxed">
-                  Nejedná se o spotřebitelský úvěr. Autocash zprostředkovává poptávky — smlouvu uzavírá poskytovatel.
+                  Nejde o spotřebitelský úvěr. Autocash pouze zprostředkovává poptávky — smlouvu s vámi uzavírá
+                  poskytovatel.
                 </p>
               </CardContent>
             </Card>

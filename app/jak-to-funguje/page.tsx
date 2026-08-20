@@ -11,7 +11,7 @@ import { SiteFooter } from "@/components/site-footer"
 export const metadata: Metadata = {
   title: "Jak to funguje",
   description:
-    "Poptávka, ocenění vozu, smlouva u poskytovatele, peníze na účet. Autocash — hotovost proti vozu, jezdíte dál.",
+    "Jak získáte peníze za auto a přitom s ním dál jezdíte: poptávka, ocenění vozu, smlouva s poskytovatelem a výplata na účet. Autocash zprostředkuje poptávku po celé ČR.",
 }
 
 export default function HowItWorksPage() {
@@ -22,16 +22,17 @@ export default function HowItWorksPage() {
         <div className="container mx-auto px-4 pt-24 md:pt-28">
           <div className="text-center max-w-2xl mx-auto mb-4">
             <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4 text-balance">
-              Čtyři kroky k hotovosti
+              Jak získáte peníze za auto
             </h1>
-            <p className="text-primary-foreground/85 text-base md:text-lg leading-relaxed max-w-md mx-auto">
-              Přepis je zajištění. Autem jezdíte dál. Detaily smlouvy řeší poskytovatel.
+            <p className="text-primary-foreground/85 text-base md:text-lg leading-relaxed max-w-xl mx-auto">
+              Vyplníte poptávku, poskytovatel ocení vůz, podepíšete smlouvu a peníze vám přijdou na účet. Autem přitom
+              jezdíte dál — v technickém průkazu zůstáváte provozovatelem.
             </p>
             <Link
               href="/#formular"
               className="mt-6 inline-flex rounded-xl bg-gold px-6 py-3 text-sm font-bold text-gold-foreground hover:bg-gold/90 transition-colors"
             >
-              Chci nezávaznou nabídku
+              Chci zjistit, kolik můžu získat
             </Link>
           </div>
         </div>
@@ -46,7 +47,12 @@ export default function HowItWorksPage() {
       <section className="py-12 md:py-16 bg-secondary/40">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-10">
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">Co se mění. Co zůstává.</h2>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+              Co se změní a co zůstane stejné
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+              Pro okolí se nic nemění. Mění se jen vlastník v technickém průkazu, abyste mohli auto dál běžně používat.
+            </p>
           </div>
           <StayVsChange />
         </div>

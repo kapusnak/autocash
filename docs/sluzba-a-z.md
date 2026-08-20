@@ -198,12 +198,15 @@ Co rozhoduje, kterému partnerovi lead nabídnout (a kdo ho vezme):
 
 ### Povolené (web, ads, telefon)
 
-- Potřebujete peníze. Autem jezdíte dál.
-- Hotovost proti vozu. Přepis je zajištění.
-- Smlouvu a výplatu řeší poskytovatel — obvykle do 24 hodin.
-- Do 24 hodin · Jezdíte dál · Bez bankovní hry · Celá ČR
-- Částka podle vozu. Podmínky až po ocenění.
-- Nejedná se o spotřebitelský úvěr. Autocash zprostředkovává poptávky.
+Psát přirozené české věty, ne hesla z překladače. Inspirace u poskytovatelů: „peníze za auto a jezděte dál“, „zůstáváte provozovatelem“, „vůz se dočasně přepíše“.
+
+- Získejte peníze za auto a jezděte s ním dál.
+- Za hodnotu vozu vám poskytovatel vyplatí hotovost a vy auto dál používáte.
+- V technickém průkazu zůstáváte provozovatelem — vůz se jen dočasně přepíše.
+- Peníze míváte na účtu do 24 hodin od podpisu smlouvy.
+- Bez dokládání příjmů, po celé ČR.
+- Částka podle vozu. Konkrétní nabídku připraví poskytovatel po ocenění.
+- Nejde o spotřebitelský úvěr. Autocash pouze zprostředkovává poptávky.
 
 ### Zakázané jako univerzální fakt
 
@@ -216,6 +219,7 @@ Co rozhoduje, kterému partnerovi lead nabídnout (a kdo ho vezme):
 - „My vám půjčíme“ / „náš úvěr“
 - Jména a loga partnerů na marketingovém webu
 - Srovnávací tabulka 90 % vs. 40–60 %
+- Telegrafická čeština bez vět: „Přepis je zajištění“, „Autem jezdíte dál.“, „Auto, klíče, ježdění“
 
 ---
 
