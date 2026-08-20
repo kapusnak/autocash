@@ -21,7 +21,7 @@ const dmSans = DM_Sans({
 
 const siteTitle = "Autocash — peníze za auto, se kterým jezdíte dál"
 const siteDescription =
-  "Získejte hotovost za hodnotu svého vozu a jezděte s ním dál. Vůz se dočasně přepíše na poskytovatele, vy zůstáváte provozovatelem. Po celé ČR, obvykle do 24 hodin od podpisu."
+  "Získejte hotovost za hodnotu svého vozu a jezděte s ním dál. Vůz se dočasně přepíše na nás, vy zůstáváte provozovatelem. Po celé ČR, obvykle do 24 hodin od podpisu."
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://autocash.cz"
 

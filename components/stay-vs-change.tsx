@@ -5,8 +5,8 @@ export function StayVsChange() {
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Co se změní</p>
         <h3 className="font-display mt-2 text-xl font-bold text-foreground">Vlastník v technickém průkazu</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Vůz se dočasně přepíše na poskytovatele. Tím je dohoda zajištěná — nejde o to, že byste auto odevzdali do
-          bazaru nebo přišli o klíče.
+          Vůz se dočasně přepíše na nás. Tím je dohoda zajištěná — nejde o to, že byste auto odevzdali do bazaru nebo
+          přišli o klíče.
         </p>
         <TpSketch />
       </article>

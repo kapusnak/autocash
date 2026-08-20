@@ -7,22 +7,22 @@ const STEPS = [
   {
     icon: Send,
     title: "Pošlete poptávku",
-    hint: "Vyplníte krátký formulář nebo zavoláte. Ozveme se vám a poptávku předáme poskytovateli.",
+    hint: "Vyplníte krátký formulář nebo zavoláte. Ozveme se vám a probereme detaily.",
   },
   {
     icon: ClipboardCheck,
     title: "Oceníme vůz",
-    hint: "Poskytovatel posoudí značku, rok výroby, stav a nájezd a připraví konkrétní nabídku.",
+    hint: "Posoudíme značku, rok výroby, stav a nájezd a připravíme vám konkrétní nabídku.",
   },
   {
     icon: FilePenLine,
     title: "Podepíšete smlouvu",
-    hint: "Smlouvu uzavíráte s poskytovatelem. Vůz se na něj přepíše, vy zůstáváte provozovatelem a autem dál jezdíte.",
+    hint: "Smlouvu uzavřeme s vámi. Vůz se přepíše na nás, vy zůstáváte provozovatelem a autem dál jezdíte.",
   },
   {
     icon: Banknote,
     title: "Peníze na účet",
-    hint: "Po podpisu vám poskytovatel pošle dohodnutou částku, obvykle do 24 hodin.",
+    hint: "Po podpisu vám pošleme dohodnutou částku, obvykle do 24 hodin.",
   },
 ] as const
 

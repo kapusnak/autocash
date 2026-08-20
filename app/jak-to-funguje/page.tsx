@@ -11,7 +11,7 @@ import { SiteFooter } from "@/components/site-footer"
 export const metadata: Metadata = {
   title: "Jak to funguje",
   description:
-    "Jak získáte peníze za auto a přitom s ním dál jezdíte: poptávka, ocenění vozu, smlouva s poskytovatelem a výplata na účet. Autocash zprostředkuje poptávku po celé ČR.",
+    "Jak u Autocash získáte peníze za auto a přitom s ním dál jezdíte: poptávka, ocenění vozu, smlouva a výplata na účet. Po celé ČR.",
 }
 
 export default function HowItWorksPage() {
@@ -25,7 +25,7 @@ export default function HowItWorksPage() {
               Jak získáte peníze za auto
             </h1>
             <p className="text-primary-foreground/85 text-base md:text-lg leading-relaxed max-w-xl mx-auto">
-              Vyplníte poptávku, poskytovatel ocení vůz, podepíšete smlouvu a peníze vám přijdou na účet. Autem přitom
+              Vyplníte poptávku, oceníme vůz, podepíšete s námi smlouvu a peníze vám přijdou na účet. Autem přitom
               jezdíte dál — v technickém průkazu zůstáváte provozovatelem.
             </p>
             <Link

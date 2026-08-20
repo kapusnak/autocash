@@ -60,7 +60,7 @@ export function CtaSection() {
         Potřebujete peníze rychle?
       </h2>
       <p className="relative text-primary-foreground/85 mb-6 md:mb-8 max-w-md mx-auto">
-        Zanechte telefonní číslo. Ozveme se vám, probereme vůz a předáme vás poskytovateli. Auto zatím zůstává u vás.
+        Zanechte telefonní číslo. Ozveme se vám, probereme vůz a řekneme, jak dál. Auto zatím zůstává u vás.
       </p>
 
       <form onSubmit={handleSubmit} className="relative flex flex-col sm:flex-row gap-3 max-w-md mx-auto">

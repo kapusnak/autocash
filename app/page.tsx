@@ -40,9 +40,9 @@ export default function Home() {
                 <span className="block text-gold mt-1">a jezděte s ním dál.</span>
               </h1>
               <p className="text-sm sm:text-base lg:text-lg text-card/85 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                Za hodnotu vozu vám poskytovatel vyplatí hotovost a vy auto dál používáte. V technickém průkazu
-                zůstáváte provozovatelem — vůz se jen dočasně přepíše, aby byla dohoda zajištěná. Peníze míváte na
-                účtu do 24 hodin od podpisu smlouvy.
+                Za hodnotu vozu vám vyplatíme hotovost a vy auto dál používáte. V technickém průkazu zůstáváte
+                provozovatelem — vůz se jen dočasně přepíše na nás, abyste mohli jezdit dál. Peníze míváte na účtu do
+                24 hodin od podpisu smlouvy.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-5 pt-1">
                 {chips.map(({ icon: Icon, label }) => (
