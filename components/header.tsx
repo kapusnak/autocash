@@ -79,7 +79,7 @@ export function Header() {
               className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-gold px-4 py-3 text-sm font-bold text-gold-foreground"
             >
               <Car className="w-4 h-4" />
-              Chci peníze za auto
+              Chci nabídku
             </a>
           </div>
         </nav>

@@ -4,34 +4,24 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const faqs = [
   {
-    question: "Pro koho je Autocash určen?",
-    answer:
-      "Pro majitele vozidel, kteří potřebují rychlou hotovost. Financujeme osobní, užitková i nákladní vozidla, obytné vozy, motocykly a veterány.",
-  },
-  {
-    question: "Prověřujete registry a úvěruschopnost?",
-    answer:
-      "Nezkoumáme finanční historii ani bankovní registry tak přísně jako banky. Překážkou je aktivní exekuce nebo probíhající insolvence — ukončená insolvence není problém.",
+    question: "Pro koho to je?",
+    answer: "Pro majitele vozu, který potřebuje rychle hotovost a chce autem dál jezdit.",
   },
   {
     question: "Mohu auto po přepisu dál řídit?",
-    answer:
-      "Ano. Vozidlo používáte dál a v technickém průkazu zůstáváte provozovatelem. Přepis slouží jako zajištění financování.",
+    answer: "Ano. Přepis je zajištění. V technickém průkazu zůstáváte provozovatelem.",
   },
   {
-    question: "Kolik % z ceny vozu mohu získat?",
-    answer:
-      "Obvykle až kolem 90 % reálné tržní hodnoty — záleží na značce, roku, stavu a kilometrech. Konkrétní nabídku připravíme po ocenění.",
+    question: "Kolik dostanu?",
+    answer: "Částka podle vozu. Konkrétní nabídku připraví poskytovatel po ocenění.",
   },
   {
-    question: "Kdy si mohu vůz odkoupit zpět?",
-    answer:
-      "Kdykoliv. Zpětný odkup je za stejnou cenu, za jakou byl vůz vykoupen — bez skrytých pastí.",
+    question: "Jak rychle mám peníze?",
+    answer: "Po ocenění a podpisu smlouvy u poskytovatele obvykle do 24 hodin.",
   },
   {
-    question: "Jak rychle dostanu peníze?",
-    answer:
-      "Po dohodě a kontrole vozu často do 24 hodin. Peníze posíláme okamžitým převodem na účet.",
+    question: "Je to úvěr?",
+    answer: "Ne. Nejde o spotřebitelský úvěr. Autocash zprostředkovává poptávky — smlouvu uzavírá poskytovatel.",
   },
 ]
 
@@ -39,12 +29,12 @@ export function FaqSection() {
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
-        Často kladené otázky
+        Krátké odpovědi
       </h2>
       <Accordion type="single" collapsible className="space-y-3">
         {faqs.map((faq, index) => (
           <AccordionItem
-            key={index}
+            key={faq.question}
             value={`item-${index}`}
             className="bg-card border border-border rounded-xl px-4 md:px-6 shadow-sm"
           >

@@ -35,8 +35,8 @@ export default function OchranaOsobnichUdajuPage() {
               <strong className="text-foreground">{SITE.controller.name}</strong>, IČ: {SITE.controller.ico}, se
               sídlem {SITE.controller.address} (dále jen &quot;Provozovatel&quot; nebo &quot;my&quot;), jako správce
               osobních údajů, zpracovává vaše osobní údaje v souladu s nařízením (EU) 2016/679 (GDPR) a dalšími
-              platnými právními předpisy. Tyto stránky Autocash slouží výhradně k poptávkám financování zajištěného
-              vozidlem.
+              platnými právními předpisy. Tyto stránky Autocash slouží výhradně ke zprostředkování poptávek na
+              financování zajištěné vozidlem.
             </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
@@ -54,7 +54,6 @@ export default function OchranaOsobnichUdajuPage() {
               <li>Počet najetých kilometrů</li>
               <li>VIN (nepovinné)</li>
               <li>Požadovaná částka</li>
-              <li>Trvání smlouvy (měsíce)</li>
             </ul>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">

@@ -121,8 +121,7 @@ export default function KontaktyPage() {
                   </div>
                 </div>
                 <p className="mt-8 text-xs text-muted-foreground leading-relaxed">
-                  Nejedná se o spotřebitelský úvěr. Služba spočívá v dočasném výkupu / financování zajištěném
-                  přepisem vozidla.
+                  Nejedná se o spotřebitelský úvěr. Autocash zprostředkovává poptávky — smlouvu uzavírá poskytovatel.
                 </p>
               </CardContent>
             </Card>
