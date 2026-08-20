@@ -15,7 +15,7 @@ export default function NotFound() {
         <p className="font-display text-6xl font-bold text-primary mb-4">404</p>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">Stránka nenalezena</h1>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          Tato adresa neexistuje. Vraťte se na úvodní stránku a získejte nabídku financování za auto.
+          Tato adresa neexistuje. Vraťte se na úvod a pošlete nezávaznou poptávku.
         </p>
         <Link
           href="/"

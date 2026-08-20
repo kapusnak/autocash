@@ -140,3 +140,94 @@
 .animate-fade-up-delay {
   animation: fade-up 0.7s ease-out 0.12s both;
 }
+
+@keyframes rail-line-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes rail-line-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes rail-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes coin-out {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(18px, -6px);
+    opacity: 1;
+  }
+}
+
+.rail-visible .rail-line {
+  transform-origin: left center;
+}
+
+@media (min-width: 768px) {
+  .rail-visible .rail-line {
+    animation: rail-line-x 0.55s ease-out both;
+  }
+}
+
+@media (max-width: 767px) {
+  .rail-visible .rail-line {
+    transform-origin: top center;
+    animation: rail-line-y 0.55s ease-out both;
+  }
+}
+
+.rail-pending .rail-step {
+  opacity: 0;
+}
+
+.rail-visible .rail-step {
+  animation: rail-step-in 0.45s ease-out both;
+}
+
+.stay-coin {
+  animation: coin-out 2.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-up-delay,
+  .animate-shake,
+  .animate-slide-in-bottom,
+  .animate-pulse,
+  .rail-visible .rail-line,
+  .rail-visible .rail-step,
+  .stay-coin {
+    animation: none !important;
+  }
+
+  .rail-pending .rail-step,
+  .rail-visible .rail-step {
+    opacity: 1;
+    transform: none;
+  }
+}

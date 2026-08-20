@@ -15,7 +15,7 @@ export function SiteFooter() {
               <span className="font-display text-2xl font-bold">Autocash</span>
             </div>
             <p className="text-primary-foreground/75 text-sm leading-relaxed max-w-xs">
-              Financování výměnou za přepis vozidla. Hotovost rychle — auto užíváte dál.
+              Hotovost proti vozu. Přepis je zajištění. Autem jezdíte dál.
             </p>
             <div className="mt-5">
               <ZivefirmyBadge variant="dark" />
@@ -88,7 +88,9 @@ export function SiteFooter() {
 
         <div className="mt-10 border-t border-white/15 pt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-primary-foreground/55">
           <p>© {new Date().getFullYear()} Autocash. Všechna práva vyhrazena.</p>
-          <p>Nejedná se o spotřebitelský úvěr.</p>
+          <p>
+            Nejedná se o spotřebitelský úvěr. Autocash zprostředkovává poptávky — smlouvu uzavírá poskytovatel.
+          </p>
         </div>
       </div>
     </footer>

@@ -141,7 +141,6 @@ const calculatorSchema = z
     year: z.string(),
     mileage: z.string(),
     vin: z.string(),
-    contractDurationMonths: z.string(),
     vehicleAmountCzk: z.number(),
   })
   .superRefine((data, ctx) => {
@@ -173,25 +172,6 @@ const calculatorSchema = z
     if (data.vehicleAmountCzk < CAR_RANGE.min || data.vehicleAmountCzk > CAR_RANGE.max) {
       ctx.addIssue({ code: "custom", message: "Neplatná částka.", path: ["vehicleAmountCzk"] })
     }
-    const contractMonths = data.contractDurationMonths.trim()
-    if (contractMonths.length > 0) {
-      if (!/^\d+$/.test(contractMonths)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Zadejte počet měsíců jako celé číslo.",
-          path: ["contractDurationMonths"],
-        })
-      } else {
-        const n = Number.parseInt(contractMonths, 10)
-        if (n < 1 || n > 360) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Zadejte počet měsíců v rozmezí 1–360.",
-            path: ["contractDurationMonths"],
-          })
-        }
-      }
-    }
   })
 
 type CalculatorFormValues = z.infer<typeof calculatorSchema>
@@ -204,7 +184,6 @@ function emptyFields(): CalculatorFormValues {
     year: "",
     mileage: "",
     vin: "",
-    contractDurationMonths: "",
     vehicleAmountCzk: snapToCarValue(DEFAULT_CAR_AMOUNT),
     email: "",
     phoneDigits: "",
@@ -254,10 +233,7 @@ export function LoanCalculator() {
       const name = `${values.firstName.trim()} ${values.lastName.trim()}`.trim()
       const amount = snapToCarValue(values.vehicleAmountCzk)
       const vinPart = values.vin.trim() ? `, VIN ${values.vin.trim()}` : ""
-      const contractPart = values.contractDurationMonths.trim()
-        ? `, trvání smlouvy ${values.contractDurationMonths.trim()} měs.`
-        : ""
-      const serviceType = `Peníze ihned a jezděte dál — ${values.vehicleModel.trim()}, r.v. ${values.year.trim()}, ${values.mileage.trim()} km${vinPart}${contractPart}`
+      const serviceType = `Peníze ihned a jezděte dál — ${values.vehicleModel.trim()}, r.v. ${values.year.trim()}, ${values.mileage.trim()} km${vinPart}`
 
       await sendLead({
         source: "calculator",
@@ -298,7 +274,7 @@ export function LoanCalculator() {
     <Card id="formular" className="w-full max-w-[calc(100vw-2rem)] sm:max-w-md shadow-2xl border-0 bg-card scroll-mt-28">
       <CardContent className="px-4 sm:px-5 py-4 sm:py-5">
         <div className="mb-4">
-          <h3 className="font-display text-lg font-semibold text-card-foreground">Chci peníze za auto</h3>
+          <h3 className="font-display text-lg font-semibold text-card-foreground">Chci nezávaznou nabídku</h3>
           <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -399,21 +375,6 @@ export function LoanCalculator() {
             />
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="contract-duration-months" className="text-sm font-medium text-muted-foreground">
-              Trvání smlouvy (měsíce)
-            </Label>
-            <Input
-              id="contract-duration-months"
-              inputMode="numeric"
-              className="bg-secondary border-border h-11 text-sm"
-              {...form.register("contractDurationMonths")}
-            />
-            {form.formState.errors.contractDurationMonths && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.contractDurationMonths.message}</p>
-            )}
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="first-name" className="text-sm font-medium text-muted-foreground">
@@ -509,7 +470,7 @@ export function LoanCalculator() {
                 Poptávka odeslána
               </>
             ) : (
-              "Odeslat poptávku — chci hotovost"
+              "Chci nezávaznou nabídku"
             )}
           </Button>
 
