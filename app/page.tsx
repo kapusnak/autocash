@@ -31,10 +31,7 @@ export default function Home() {
 
         <div className="container mx-auto px-4 pt-28 pb-8 lg:py-10 lg:pt-28 flex-1 flex flex-col relative z-10">
           <div className="flex-1 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12">
-            <div className="text-card space-y-4 text-center lg:text-left order-1 lg:flex-1 animate-fade-up">
-              <p className="font-display text-gold text-sm sm:text-base font-bold tracking-wide uppercase">
-                Autocash
-              </p>
+            <div className="text-card space-y-4 text-center lg:text-left order-1 lg:flex-1 animate-fade-up lg:pt-20">
               <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.18] text-balance">
                 Získejte peníze za auto
                 <span className="block text-gold mt-1">a jezděte s ním dál.</span>
