@@ -1,11 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type MouseEvent } from "react"
 import { Car, Info, Menu, Phone, X } from "lucide-react"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+
+function useFormularCta() {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  return (event: MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === "/") {
+      event.preventDefault()
+      document.getElementById("formular")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      window.history.replaceState(null, "", "/#formular")
+      return
+    }
+
+    event.preventDefault()
+    router.push("/#formular")
+  }
+}
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const goToFormular = useFormularCta()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-white/10">
@@ -45,6 +64,7 @@ export function Header() {
             </Link>
             <a
               href="/#formular"
+              onClick={goToFormular}
               className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2.5 text-sm font-bold text-gold-foreground shadow-md transition-all hover:bg-gold/90 active:scale-[0.98]"
             >
               <Car className="w-4 h-4" />
@@ -75,7 +95,10 @@ export function Header() {
             </Link>
             <a
               href="/#formular"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={(event) => {
+                setIsMenuOpen(false)
+                goToFormular(event)
+              }}
               className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-gold px-4 py-3 text-sm font-bold text-gold-foreground"
             >
               <Car className="w-4 h-4" />

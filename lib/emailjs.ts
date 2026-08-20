@@ -76,7 +76,7 @@ function formatEmailJsError(err: unknown): string {
 export async function sendLead(params: LeadParams): Promise<void> {
   if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
     const detail =
-      "Chybí NEXT_PUBLIC_EMAILJS_PUBLIC_KEY, NEXT_PUBLIC_EMAILJS_SERVICE_ID nebo NEXT_PUBLIC_EMAILJS_TEMPLATE_ID. U statického exportu musí být nastavené před `npm run build` (nejen na serveru po buildu)."
+      "Chybí NEXT_PUBLIC_EMAILJS_PUBLIC_KEY, NEXT_PUBLIC_EMAILJS_SERVICE_ID nebo NEXT_PUBLIC_EMAILJS_TEMPLATE_ID. Musí být nastavené před `npm run build` (nejen na serveru po buildu)."
     console.error("[EmailJS]", detail)
     throw new Error(detail)
   }

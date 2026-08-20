@@ -4,8 +4,8 @@ Lead-gen web pro financování výměnou za přepis vozidla (cars-only).
 
 ## Stack
 
-- Next.js 16 (static export → `out/`)
-- Tailwind CSS 4 + Syne / DM Sans
+- Next.js 16 (App Router) na Railway (`next start`)
+- Tailwind CSS 4 + Plus Jakarta Sans / DM Sans
 - EmailJS, Zod, react-hook-form
 
 ## Start

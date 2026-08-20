@@ -2,11 +2,14 @@
   "name": "autocash",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start -p ${PORT:-3000}"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

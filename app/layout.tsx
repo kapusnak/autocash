@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google"
 import { AppToaster } from "@/components/app-toaster"
+import { FormularHashScroll } from "@/components/formular-hash-scroll"
 import { GoogleAdsGtag } from "@/components/google-ads-gtag"
 import { GoogleAnalytics } from "@/components/google-analytics"
 import { GoogleTagManager } from "@/components/google-tag-manager"
@@ -60,6 +61,7 @@ export default function RootLayout({
       <body className={`${plusJakarta.variable} ${dmSans.variable} font-sans antialiased`}>
         <GoogleTagManager />
         <GoogleAdsGtag />
+        <FormularHashScroll />
         {children}
         <GoogleAnalytics />
         <AppToaster />
