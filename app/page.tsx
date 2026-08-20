@@ -1,4 +1,4 @@
-import { Car, Clock, MapPin, Shield } from "lucide-react"
+import { ArrowDown, ArrowRight, Car, Clock, MapPin, Shield } from "lucide-react"
 
 import { Header } from "@/components/header"
 import { LoanCalculator } from "@/components/loan-calculator"
@@ -52,10 +52,18 @@ export default function Home() {
               <div className="pt-2 flex justify-center lg:justify-start">
                 <a
                   href="#formular"
-                  className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 transition-all hover:bg-gold/90 active:scale-[0.98]"
+                  className="inline-flex lg:hidden items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-y"
                 >
-                  Chci zjistit, kolik můžu získat
+                  Vyplňte nezávaznou poptávku — ozveme se
+                  <ArrowDown className="h-4 w-4 shrink-0" aria-hidden />
                 </a>
+                <div
+                  className="hidden lg:inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-x select-none"
+                  aria-hidden="true"
+                >
+                  Vyplňte nezávaznou poptávku — ozveme se
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                </div>
               </div>
             </div>
 

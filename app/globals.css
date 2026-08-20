@@ -141,6 +141,34 @@
   animation: fade-up 0.7s ease-out 0.12s both;
 }
 
+@keyframes bounce-x {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes bounce-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1.35s ease-in-out infinite;
+}
+
+.animate-bounce-y {
+  animation: bounce-y 1.35s ease-in-out infinite;
+}
+
 @keyframes rail-line-x {
   from {
     transform: scaleX(0);
@@ -216,6 +244,8 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-up-delay,
+  .animate-bounce-x,
+  .animate-bounce-y,
   .animate-shake,
   .animate-slide-in-bottom,
   .animate-pulse,
