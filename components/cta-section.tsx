@@ -57,10 +57,10 @@ export function CtaSection() {
       <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl" />
 
       <h2 className="relative font-display text-2xl md:text-3xl font-bold text-primary-foreground mb-2">
-        Chcete nabídku?
+        Potřebujete peníze rychle?
       </h2>
       <p className="relative text-primary-foreground/85 mb-6 md:mb-8 max-w-md mx-auto">
-        Nechte číslo. Ozveme se. Smlouvu a výplatu řeší poskytovatel — auto zůstává k ježdění.
+        Zanechte telefonní číslo. Ozveme se vám, probereme vůz a předáme vás poskytovateli. Auto zatím zůstává u vás.
       </p>
 
       <form onSubmit={handleSubmit} className="relative flex flex-col sm:flex-row gap-3 max-w-md mx-auto">

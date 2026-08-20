@@ -4,24 +4,29 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const faqs = [
   {
-    question: "Pro koho to je?",
-    answer: "Pro majitele vozu, který potřebuje rychle hotovost a chce autem dál jezdit.",
+    question: "Pro koho je služba určená?",
+    answer:
+      "Pro majitele vozidla, kteří potřebují rychle hotovost a nechtějí auto natrvalo prodat. Autem můžete dál jezdit — vůz slouží jako jistota, ne jako zboží do bazaru.",
   },
   {
-    question: "Mohu auto po přepisu dál řídit?",
-    answer: "Ano. Přepis je zajištění. V technickém průkazu zůstáváte provozovatelem.",
+    question: "Můžu s autem po přepisu dál jezdit?",
+    answer:
+      "Ano. Přepis na poskytovatele slouží jen k tomu, aby bylo financování zajištěné vozidlem. Vy zůstáváte provozovatelem a vůz používáte jako dřív.",
   },
   {
-    question: "Kolik dostanu?",
-    answer: "Částka podle vozu. Konkrétní nabídku připraví poskytovatel po ocenění.",
+    question: "Kolik peněz můžu získat?",
+    answer:
+      "Záleží na značce, roku výroby, stavu a nájezdu. Konkrétní nabídku vám připraví poskytovatel po ocenění vozu — na webu slibovat přesné procento z ceny nedává smysl.",
   },
   {
-    question: "Jak rychle mám peníze?",
-    answer: "Po ocenění a podpisu smlouvy u poskytovatele obvykle do 24 hodin.",
+    question: "Jak rychle dostanu peníze?",
+    answer:
+      "Jakmile se s poskytovatelem dohodnete na částce a podepíšete smlouvu, peníze obvykle dorazí na účet do 24 hodin.",
   },
   {
-    question: "Je to úvěr?",
-    answer: "Ne. Nejde o spotřebitelský úvěr. Autocash zprostředkovává poptávky — smlouvu uzavírá poskytovatel.",
+    question: "Jedná se o půjčku nebo úvěr?",
+    answer:
+      "Ne, nejde o spotřebitelský úvěr. Autocash vám zprostředkuje poptávku u poskytovatele, který s vámi uzavře smlouvu a vyplatí peníze.",
   },
 ]
 
@@ -29,7 +34,7 @@ export function FaqSection() {
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
-        Krátké odpovědi
+        Často kladené otázky
       </h2>
       <Accordion type="single" collapsible className="space-y-3">
         {faqs.map((faq, index) => (

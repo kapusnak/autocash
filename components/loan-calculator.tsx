@@ -274,7 +274,7 @@ export function LoanCalculator() {
     <Card id="formular" className="w-full max-w-[calc(100vw-2rem)] sm:max-w-md shadow-2xl border-0 bg-card scroll-mt-28">
       <CardContent className="px-4 sm:px-5 py-4 sm:py-5">
         <div className="mb-4">
-          <h3 className="font-display text-lg font-semibold text-card-foreground">Chci nezávaznou nabídku</h3>
+          <h3 className="font-display text-lg font-semibold text-card-foreground">Nezávazná poptávka</h3>
           <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -470,13 +470,13 @@ export function LoanCalculator() {
                 Poptávka odeslána
               </>
             ) : (
-              "Chci nezávaznou nabídku"
+              "Odeslat poptávku"
             )}
           </Button>
 
           <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <Lock className="w-3 h-3" />
-            <span>100% diskrétní. Odpovídáme obratem.</span>
+            <span>Údaje zpracujeme diskrétně. Ozveme se vám obratem.</span>
           </div>
         </form>
       </CardContent>

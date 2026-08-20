@@ -4,10 +4,26 @@ import { useEffect, useRef, useState } from "react"
 import { Banknote, ClipboardCheck, FilePenLine, Send } from "lucide-react"
 
 const STEPS = [
-  { icon: Send, title: "Poptávka", hint: "Formulář nebo telefon." },
-  { icon: ClipboardCheck, title: "Ocenění vozu", hint: "Podle auta, ne podle banky." },
-  { icon: FilePenLine, title: "Smlouva u poskytovatele", hint: "Přepis je zajištění." },
-  { icon: Banknote, title: "Peníze na účet", hint: "Obvykle do 24 hodin." },
+  {
+    icon: Send,
+    title: "Pošlete poptávku",
+    hint: "Vyplníte krátký formulář nebo zavoláte. Ozveme se vám a poptávku předáme poskytovateli.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Oceníme vůz",
+    hint: "Poskytovatel posoudí značku, rok výroby, stav a nájezd a připraví konkrétní nabídku.",
+  },
+  {
+    icon: FilePenLine,
+    title: "Podepíšete smlouvu",
+    hint: "Smlouvu uzavíráte s poskytovatelem. Vůz se na něj přepíše, vy zůstáváte provozovatelem a autem dál jezdíte.",
+  },
+  {
+    icon: Banknote,
+    title: "Peníze na účet",
+    hint: "Po podpisu vám poskytovatel pošle dohodnutou částku, obvykle do 24 hodin.",
+  },
 ] as const
 
 export function ProcessRail() {

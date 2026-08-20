@@ -10,10 +10,10 @@ import { CtaSection } from "@/components/cta-section"
 import { SiteFooter } from "@/components/site-footer"
 
 const chips = [
-  { icon: Clock, label: "Do 24 hodin" },
-  { icon: Car, label: "Jezdíte dál" },
-  { icon: Shield, label: "Bez bankovní hry" },
-  { icon: MapPin, label: "Celá ČR" },
+  { icon: Clock, label: "Peníze do 24 hodin" },
+  { icon: Car, label: "S autem jezdíte dál" },
+  { icon: Shield, label: "Bez dokládání příjmů" },
+  { icon: MapPin, label: "Po celé ČR" },
 ]
 
 export default function Home() {
@@ -36,11 +36,13 @@ export default function Home() {
                 Autocash
               </p>
               <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.18] text-balance">
-                Potřebujete peníze.
-                <span className="block text-gold mt-1">Autem jezdíte dál.</span>
+                Získejte peníze za auto
+                <span className="block text-gold mt-1">a jezděte s ním dál.</span>
               </h1>
               <p className="text-sm sm:text-base lg:text-lg text-card/85 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                Hotovost proti vozu. Přepis je zajištění. Smlouvu a výplatu řeší poskytovatel — obvykle do 24 hodin.
+                Za hodnotu vozu vám poskytovatel vyplatí hotovost a vy auto dál používáte. V technickém průkazu
+                zůstáváte provozovatelem — vůz se jen dočasně přepíše, aby byla dohoda zajištěná. Peníze míváte na
+                účtu do 24 hodin od podpisu smlouvy.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-5 pt-1">
                 {chips.map(({ icon: Icon, label }) => (
@@ -55,7 +57,7 @@ export default function Home() {
                   href="#formular"
                   className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 transition-all hover:bg-gold/90 active:scale-[0.98]"
                 >
-                  Chci nezávaznou nabídku
+                  Chci zjistit, kolik můžu získat
                 </a>
               </div>
             </div>
@@ -70,8 +72,10 @@ export default function Home() {
       <section id="jak-to-funguje" className="py-16 lg:py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Čtyři kroky</h2>
-            <p className="mt-3 text-muted-foreground">Od poptávky k penězům. Bez bankovního kolečka.</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Jak to probíhá</h2>
+            <p className="mt-3 text-muted-foreground">
+              Od poptávky k penězům na účtu. Bez žádosti v bance a bez týdnů čekání.
+            </p>
           </div>
           <div className="max-w-5xl mx-auto">
             <ProcessRail />
@@ -82,8 +86,12 @@ export default function Home() {
       <section className="py-16 lg:py-20 bg-secondary/60">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center mb-10">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Co se děje s autem</h2>
-            <p className="mt-3 text-muted-foreground">Krátce a věcně.</p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+              Auto vám zůstane k dispozici
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Mění se jen zápis v technickém průkazu. Klíče, vůz i každodenní ježdění zůstávají u vás.
+            </p>
           </div>
           <div className="max-w-4xl mx-auto">
             <StayVsChange />

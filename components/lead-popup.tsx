@@ -114,9 +114,9 @@ export function LeadPopup({ cookieBarVisible = false }: LeadPopupProps) {
         </button>
 
         <div className="p-4 pb-6 lg:p-6">
-          <h3 className="font-display text-lg lg:text-2xl font-bold text-white pr-8">Potřebujete hotovost teď?</h3>
+          <h3 className="font-display text-lg lg:text-2xl font-bold text-white pr-8">Potřebujete hotovost hned?</h3>
           <p className="text-white/80 text-xs lg:text-sm mt-1 mb-3 lg:mb-4">
-            Nechte číslo — zavoláme do pár minut a nezávazně vše probereme.
+            Zanechte číslo. Zavoláme vám, nezávazně vše probereme a řekneme, jak dál.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-2 lg:gap-3">
