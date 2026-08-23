@@ -51,7 +51,8 @@ export default function HowItWorksPage() {
               Co se změní a co zůstane stejné
             </h2>
             <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Pro okolí se nic nemění. Mění se jen vlastník v technickém průkazu, abyste mohli auto dál běžně používat.
+              Celá dohoda stojí na jediné změně v technickém průkazu. Všechno ostatní — klíče, auto i každodenní
+              ježdění — zůstává vám.
             </p>
           </div>
           <StayVsChange />
