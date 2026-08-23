@@ -30,6 +30,7 @@ SMTP_PORT=465
 SMTP_USER=info@docasnyvykup.cz
 SMTP_PASS=
 LEAD_NOTIFY_TO=info@docasnyvykup.cz
+PHOTO_TOKEN_SECRET=
 # MAIL_FROM="autocash.cz <info@docasnyvykup.cz>"
 ```
 
@@ -41,7 +42,8 @@ Po cutoveru z Railway odstraňte `NEXT_PUBLIC_EMAILJS_*`. Bez rebuildu by se sta
 - [ ] Header CTA „Chci peníze za auto“ → `#formular`
 - [ ] Calculator → mail na `LEAD_NOTIFY_TO` včetně IP
 - [ ] Popup + CTA → callback mail
-- [ ] Calculator s e-mailem → klientské potvrzení
+- [ ] Calculator s e-mailem → klientské potvrzení s odkazem na fotky
+- [ ] `/fotky/…` wizard → 5 fotek → jeden mail s 5 přílohami
 - [ ] Pop-up po ~12 s
 - [ ] Cookie lišta
 - [ ] `/jak-to-funguje`, `/kontakty`, GDPR, cookies

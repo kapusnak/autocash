@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { buildLeadEmails, type LeadPayload, type LeadSource } from "@/lib/lead-email"
 import { getMailer, leadNotifyTo, mailFromAddress } from "@/lib/mailer"
+import { createLeadCode, photoWizardUrl, signPhotoToken } from "@/lib/photo-token"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -66,7 +67,34 @@ export async function POST(req: Request) {
   }
 
   const ip = clientIp(req)
-  const built = buildLeadEmails({ ...payload, ip })
+  const email = payload.email?.trim() ?? ""
+  let photoToken: string | undefined
+  let photoCode: string | undefined
+  let photoUrl: string | undefined
+  if (payload.source === "calculator" && email) {
+    try {
+      photoCode = createLeadCode()
+      photoToken = signPhotoToken({
+        code: photoCode,
+        name: payload.name?.trim() || "",
+        email,
+        phone: payload.phone,
+      })
+      photoUrl = photoWizardUrl(photoToken)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn("[lead] Token pro fotky se nevytvořil:", message)
+      photoToken = undefined
+      photoCode = undefined
+      photoUrl = undefined
+    }
+  }
+  const built = buildLeadEmails({
+    ...payload,
+    ip,
+    ...(photoUrl ? { photoUrl } : {}),
+    ...(photoCode ? { photoCode } : {}),
+  })
 
   try {
     const mailer = getMailer()
@@ -110,5 +138,8 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({
+    ok: true,
+    ...(photoToken ? { photoToken } : {}),
+  })
 }

@@ -53,14 +53,18 @@ export default function OchranaOsobnichUdajuPage() {
               <li>Počet najetých kilometrů</li>
               <li>VIN (nepovinné)</li>
               <li>Požadovaná částka</li>
+              <li>
+                Fotografie vozu (zepředu, zezadu, z boku, interiér, nákladový prostor) — na fotkách může být vidět
+                registrační značka
+              </li>
             </ul>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
               3. Jak vaše údaje získáváme
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
-              Vaše osobní údaje získáváme výhradně prostřednictvím webového formuláře a telefonních poptávek na našich
-              stránkách.
+              Vaše osobní údaje získáváme prostřednictvím webového formuláře, nahrání fotografií vozu po odeslání
+              poptávky a telefonních poptávek na našich stránkách.
             </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">

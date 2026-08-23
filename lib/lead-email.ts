@@ -108,6 +108,9 @@ export type BuiltLeadEmails = {
   phoneDisplay: string
 }
 
+const PHOTO_ANGLES =
+  "zepředu, zezadu, z boku, interiér a nákladový prostor (kufr / ložná plocha)"
+
 /** Operator notification HTML. Field order: source → name → phone → email → IP → rest. */
 function buildNotifyHtml(fields: {
   source: string
@@ -120,6 +123,8 @@ function buildNotifyHtml(fields: {
   serviceType: string
   amount: string
   ip: string
+  photoCode?: string
+  photoUrl?: string
 }): string {
   const emailCell = fields.email
     ? `<a href="mailto:${escapeHtml(fields.email)}" style="color: ${ACCENT}; text-decoration: none;">${escapeHtml(fields.email)}</a>`
@@ -176,9 +181,27 @@ function buildNotifyHtml(fields: {
           <td style="padding: 5px 0;"><strong>Požadovaná služba:</strong></td>
           <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.serviceType)}</td>
         </tr>
+        ${
+          fields.photoCode
+            ? `<tr>
+          <td style="padding: 5px 0;"><strong>Kód poptávky:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.photoCode)}</td>
+        </tr>`
+            : ""
+        }
       </tbody>
     </table>
   </div>
+  ${
+    fields.photoUrl
+      ? `<div style="margin-top: 16px; padding: 12px; background-color: #f7f7f7; border-radius: 6px;">
+    <div style="font-size: 13px; font-weight: bold; color: ${ACCENT}; margin-bottom: 6px;">Fotky vozu</div>
+    <div style="font-size: 13px; line-height: 1.5;">Klient může nahrát ${escapeHtml(PHOTO_ANGLES)} zde:<br>
+      <a href="${escapeHtml(fields.photoUrl)}" style="color: ${ACCENT};">${escapeHtml(fields.photoUrl)}</a>
+    </div>
+  </div>`
+      : ""
+  }
   <div style="margin-top: 20px; padding: 12px; background-color: #ecfdf5; border: 1px solid ${ACCENT}; border-radius: 6px; text-align: center;">
     <div style="font-size: 13px; color: ${ACCENT}; margin-bottom: 3px;">POŽADOVANÁ ČÁSTKA</div>
     <div style="font-size: 22px; font-weight: bold; color: ${ACCENT};">${escapeHtml(fields.amount)}</div>
@@ -192,6 +215,7 @@ function buildClientHtml(fields: {
   propertyType: string
   serviceType: string
   amount: string
+  photoUrl?: string
 }): string {
   const phoneLines = SITE.phones
     .map(
@@ -231,6 +255,15 @@ function buildClientHtml(fields: {
   <div style="margin-top: 30px; padding: 15px; border-left: 4px solid ${ACCENT}; background-color: #f0fdf4; border-radius: 4px;">
     <h3 style="color: ${ACCENT}; margin-top: 0; font-size: 17px;">CO BUDE DÁL?</h3>
     <p>Vaši poptávku posoudíme podle vozu a požadované částky. Ozveme se vám telefonicky nebo e-mailem.</p>
+    ${
+      fields.photoUrl
+        ? `<p>Pro urychlení ocenění prosíme o <strong>5 fotek vozu</strong>: ${escapeHtml(PHOTO_ANGLES)}.</p>
+    <p style="margin: 14px 0;">
+      <a href="${escapeHtml(fields.photoUrl)}" style="display: inline-block; background-color: ${ACCENT}; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: bold;">Nahrát fotky vozu</a>
+    </p>
+    <p style="font-size: 13px;">Odkaz můžete použít i později, pokud teď nemáte fotky po ruce.</p>`
+        : ""
+    }
     <p style="margin: 10px 0 0 0; line-height: 1.5; font-weight: normal;">Obvykle se ozveme během pracovní doby.</p>
   </div>
   <div style="margin-top: 30px; padding-top: 15px; border-top: 1px dashed #cccccc;">
@@ -248,7 +281,9 @@ function buildClientHtml(fields: {
 </div>`.trim()
 }
 
-export function buildLeadEmails(params: LeadPayload & { ip: string }): BuiltLeadEmails {
+export function buildLeadEmails(
+  params: LeadPayload & { ip: string; photoUrl?: string; photoCode?: string },
+): BuiltLeadEmails {
   const callback = isCallbackOnly(params.source)
   const propertyType = callback ? PLACEHOLDER : (params.assetType?.trim() || PLACEHOLDER)
   const propertyAddress = callback ? PLACEHOLDER : (params.propertyAddress?.trim() || PLACEHOLDER)
@@ -284,6 +319,8 @@ export function buildLeadEmails(params: LeadPayload & { ip: string }): BuiltLead
     `Typ zajištění: ${propertyType}`,
     `Požadovaná služba: ${serviceType}`,
     `Částka: ${amount}`,
+    ...(params.photoCode ? [`Kód poptávky: ${params.photoCode}`] : []),
+    ...(params.photoUrl ? [`Fotky vozu: ${params.photoUrl}`] : []),
   ].join("\n")
 
   const notifyHtml = buildNotifyHtml({
@@ -297,6 +334,8 @@ export function buildLeadEmails(params: LeadPayload & { ip: string }): BuiltLead
     serviceType,
     amount,
     ip,
+    ...(params.photoCode ? { photoCode: params.photoCode } : {}),
+    ...(params.photoUrl ? { photoUrl: params.photoUrl } : {}),
   })
 
   const clientNameForBody = callback ? PLACEHOLDER : name
@@ -313,6 +352,13 @@ export function buildLeadEmails(params: LeadPayload & { ip: string }): BuiltLead
     `Požadovaná částka: ${amount}`,
     "",
     "Obvykle se ozveme během pracovní doby.",
+    ...(params.photoUrl
+      ? [
+          "",
+          `Pro urychlení ocenění prosíme o 5 fotek vozu (${PHOTO_ANGLES}):`,
+          params.photoUrl,
+        ]
+      : []),
     "",
     `Telefon: ${phonesText}`,
     `E-mail: ${SITE.contactEmail}`,
@@ -326,6 +372,7 @@ export function buildLeadEmails(params: LeadPayload & { ip: string }): BuiltLead
     propertyType,
     serviceType,
     amount,
+    ...(params.photoUrl ? { photoUrl: params.photoUrl } : {}),
   })
 
   return {
