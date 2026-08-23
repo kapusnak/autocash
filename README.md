@@ -6,15 +6,17 @@ Lead-gen web pro financování výměnou za přepis vozidla (cars-only).
 
 - Next.js 16 (App Router) na Railway (`next start`)
 - Tailwind CSS 4 + Plus Jakarta Sans / DM Sans
-- EmailJS, Zod, react-hook-form
+- Nodemailer → Spacemail (`POST /api/lead`), Zod, react-hook-form
 
 ## Start
 
 ```bash
 cp .env.example .env.local
-# vyplňte EmailJS klíče
+# doplňte SMTP_PASS (a případně analytics)
 npm install
 npm run dev
 ```
+
+Bez SMTP credentials `/api/lead` vrátí 500 — očekávané.
 
 Nasazení: viz [DEPLOY.md](./DEPLOY.md).

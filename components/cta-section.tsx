@@ -7,7 +7,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 
-import { sendLead } from "@/lib/emailjs"
+import { sendLead } from "@/lib/send-lead"
 import { toFullPhone } from "@/lib/phone-420"
 import { PhoneDigitsInput } from "@/components/phone-digits-input"
 import { Phone } from "lucide-react"

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { toast } from "sonner"
 
-import { sendLead } from "@/lib/emailjs"
+import { sendLead } from "@/lib/send-lead"
 import { toFullPhone } from "@/lib/phone-420"
 import { PhoneDigitsInput } from "@/components/phone-digits-input"
 import { X, Phone } from "lucide-react"

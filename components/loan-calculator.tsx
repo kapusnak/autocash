@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 import Link from "next/link"
 
-import { sendLead } from "@/lib/emailjs"
+import { sendLead } from "@/lib/send-lead"
 import { toFullPhone } from "@/lib/phone-420"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
