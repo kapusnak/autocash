@@ -36,7 +36,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteTitle,
     description: siteDescription,
-    images: ["/og-social-share.svg"],
+    images: [
+      {
+        url: "/og-social-share.jpg",
+        width: 1024,
+        height: 576,
+        alt: "Autocash — peníze za auto, se kterým jezdíte dál",
+      },
+    ],
     type: "website",
     locale: "cs_CZ",
   },
@@ -44,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/og-social-share.svg"],
+    images: ["/og-social-share.jpg"],
   },
   icons: {
     icon: [
