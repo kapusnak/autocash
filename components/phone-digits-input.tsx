@@ -66,7 +66,7 @@ export const PhoneDigitsInput = forwardRef<HTMLInputElement, PhoneDigitsInputPro
     }, [])
 
     return (
-      <div className={cn("flex min-w-0 items-center gap-2", className)} onPointerDown={handleWrapperPointerDown}>
+      <div className={cn("flex min-w-0 items-center gap-2 text-base md:text-sm", className)} onPointerDown={handleWrapperPointerDown}>
         <span
           className={cn("shrink-0 select-none font-medium tabular-nums text-muted-foreground", prefixClassName)}
           aria-hidden
@@ -81,7 +81,7 @@ export const PhoneDigitsInput = forwardRef<HTMLInputElement, PhoneDigitsInputPro
           {...rest}
           placeholder={placeholder}
           className={cn(
-            "min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none outline-none ring-0 focus:ring-0",
+            "min-w-0 flex-1 border-0 bg-transparent p-0 text-base shadow-none outline-none ring-0 focus:ring-0 md:text-sm",
             inputClassName,
           )}
           value={display}

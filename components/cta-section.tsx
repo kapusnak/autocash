@@ -64,12 +64,12 @@ export function CtaSection() {
       </p>
 
       <form onSubmit={handleSubmit} className="relative flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-        <div className="flex flex-1 min-w-0 h-12 md:h-14 items-center gap-2 rounded-md bg-card pl-3 pr-4 text-foreground focus-within:ring-2 focus-within:ring-gold">
-          <Phone className="w-5 h-5 shrink-0 text-muted-foreground" aria-hidden />
+        <div className="flex h-14 min-h-14 w-full min-w-0 flex-1 items-center gap-2.5 rounded-md bg-card px-3.5 text-base text-foreground focus-within:ring-2 focus-within:ring-gold sm:px-4">
+          <Phone className="size-5 shrink-0 text-muted-foreground" aria-hidden />
           <PhoneDigitsInput
-            className="min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none h-full"
-            inputClassName="text-foreground placeholder:text-muted-foreground"
-            prefixClassName="text-muted-foreground"
+            className="h-full min-w-0 flex-1 gap-2.5 border-0 bg-transparent p-0 text-base shadow-none md:text-base"
+            inputClassName="h-full text-base leading-none text-foreground placeholder:text-muted-foreground md:text-base"
+            prefixClassName="text-base leading-none text-muted-foreground md:text-base"
             value={phoneDigits}
             onChange={setPhoneDigits}
             autoComplete="off"
@@ -80,7 +80,7 @@ export function CtaSection() {
         <Button
           type="submit"
           disabled={submitStatus === "sending"}
-          className="h-12 md:h-14 px-6 md:px-8 bg-gold hover:bg-gold/90 text-gold-foreground font-bold text-base shadow-lg"
+          className="h-14 min-h-14 px-6 text-base font-bold shadow-lg bg-gold text-gold-foreground hover:bg-gold/90 sm:px-8"
         >
           {submitStatus === "sending" ? "Odesílám…" : submitStatus === "success" ? "Odesláno" : "Zavolejte mi"}
         </Button>

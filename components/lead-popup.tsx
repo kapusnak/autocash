@@ -119,13 +119,13 @@ export function LeadPopup({ cookieBarVisible = false }: LeadPopupProps) {
             Zanechte číslo. Zavoláme vám, nezávazně vše probereme a řekneme, jak dál.
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2 lg:gap-3">
-            <div className="flex h-10 lg:h-12 w-full items-center gap-2 rounded-lg bg-white pl-3 pr-4 text-foreground focus-within:ring-2 focus-within:ring-gold">
-              <Phone className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2.5 lg:gap-3">
+            <div className="flex h-12 min-h-12 w-full items-center gap-2.5 rounded-lg bg-white px-3.5 text-base text-foreground focus-within:ring-2 focus-within:ring-gold lg:h-12">
+              <Phone className="size-5 shrink-0 text-muted-foreground" aria-hidden />
               <PhoneDigitsInput
-                className="min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none h-full"
-                inputClassName="text-foreground placeholder:text-muted-foreground"
-                prefixClassName="text-muted-foreground"
+                className="h-full min-w-0 flex-1 gap-2.5 border-0 bg-transparent p-0 text-base shadow-none md:text-base"
+                inputClassName="h-full text-base leading-none text-foreground placeholder:text-muted-foreground md:text-base"
+                prefixClassName="text-base leading-none text-muted-foreground md:text-base"
                 value={phoneDigits}
                 onChange={setPhoneDigits}
                 autoComplete="off"
@@ -137,7 +137,7 @@ export function LeadPopup({ cookieBarVisible = false }: LeadPopupProps) {
             <Button
               type="submit"
               disabled={submitStatus === "sending"}
-              className="w-full h-10 lg:h-12 px-5 lg:px-6 bg-gold hover:bg-gold/90 text-gold-foreground font-bold rounded-lg text-sm lg:text-base"
+              className="h-12 min-h-12 w-full rounded-lg px-5 text-base font-bold bg-gold text-gold-foreground hover:bg-gold/90 lg:px-6"
             >
               {submitStatus === "sending"
                 ? "Odesílám…"
