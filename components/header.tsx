@@ -30,11 +30,13 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <img
-              src="/logo-autocash.svg"
+              src="/logo-autocash.png"
               alt=""
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-contain shrink-0 transition-transform group-hover:scale-105"
+              width={48}
+              height={48}
+              className="w-11 h-11 sm:w-12 sm:h-12 object-contain shrink-0 transition-transform group-hover:scale-105"
             />
             <span className="font-display text-xl sm:text-2xl font-bold tracking-tight text-card">Autocash</span>
           </Link>

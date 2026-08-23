@@ -10,8 +10,14 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 lg:py-16">
         <div className="grid gap-10 md:grid-cols-3">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <img src="/logo-autocash.svg" alt="" className="h-10 w-10 rounded-lg" />
+            <div className="flex items-center gap-2.5 mb-4">
+              <img
+                src="/logo-autocash.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+              />
               <span className="font-display text-2xl font-bold">Autocash</span>
             </div>
             <p className="text-primary-foreground/75 text-sm leading-relaxed max-w-xs">

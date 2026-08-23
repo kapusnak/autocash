@@ -47,7 +47,11 @@ export const metadata: Metadata = {
     images: ["/og-social-share.svg"],
   },
   icons: {
-    icon: [{ url: "/logo-autocash.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/logo-autocash.svg", type: "image/svg+xml" },
+      { url: "/logo-autocash-64.png", type: "image/png", sizes: "64x64" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 }
 
