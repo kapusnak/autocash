@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useCallback, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -196,6 +197,7 @@ const phoneInputWrapperClass =
 const requiredStar = <span className="text-red-600">*</span>
 
 export function LoanCalculator() {
+  const router = useRouter()
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
 
   const form = useForm<CalculatorFormValues>({
@@ -235,7 +237,7 @@ export function LoanCalculator() {
       const vinPart = values.vin.trim() ? `, VIN ${values.vin.trim()}` : ""
       const serviceType = `Peníze ihned a jezděte dál — ${values.vehicleModel.trim()}, r.v. ${values.year.trim()}, ${values.mileage.trim()} km${vinPart}`
 
-      await sendLead({
+      const result = await sendLead({
         source: "calculator",
         phone,
         email: values.email.trim(),
@@ -245,15 +247,24 @@ export function LoanCalculator() {
         serviceType,
       })
       setSubmitStatus("success")
-      toast.success("Děkujeme za poptávku", {
-        id: "lead-calculator-success",
-        description: "Brzy vás budeme kontaktovat. Zkontrolujte prosím i složku s nevyžádanou poštou.",
-        duration: 5000,
-      })
       form.reset({
         ...emptyFields(),
         email: values.email,
         phoneDigits: values.phoneDigits,
+      })
+      if (result.photoToken) {
+        toast.success("Děkujeme za poptávku", {
+          id: "lead-calculator-success",
+          description: "Teď prosím přidejte fotky vozu. Zrychlí to ocenění.",
+          duration: 4000,
+        })
+        router.push(`/fotky/${encodeURIComponent(result.photoToken)}`)
+        return
+      }
+      toast.success("Děkujeme za poptávku", {
+        id: "lead-calculator-success",
+        description: "Brzy vás budeme kontaktovat. Zkontrolujte prosím i složku s nevyžádanou poštou.",
+        duration: 5000,
       })
     } catch (e) {
       setSubmitStatus("error")

@@ -12,7 +12,7 @@ Lead-gen web pro financování výměnou za přepis vozidla (cars-only).
 
 ```bash
 cp .env.example .env.local
-# doplňte SMTP_PASS (a případně analytics)
+# doplňte SMTP_PASS, PHOTO_TOKEN_SECRET (a případně analytics)
 npm install
 npm run dev
 ```

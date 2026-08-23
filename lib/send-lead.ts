@@ -13,7 +13,11 @@ export type LeadParams = {
   pagePath?: string
 }
 
-export async function sendLead(params: LeadParams): Promise<void> {
+export type SendLeadResult = {
+  photoToken?: string
+}
+
+export async function sendLead(params: LeadParams): Promise<SendLeadResult> {
   const res = await fetch("/api/lead", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -30,14 +34,15 @@ export async function sendLead(params: LeadParams): Promise<void> {
     }),
   })
 
+  let data: { error?: string; photoToken?: string } = {}
+  try {
+    data = (await res.json()) as { error?: string; photoToken?: string }
+  } catch {
+    /* ignore */
+  }
+
   if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const data = (await res.json()) as { error?: string }
-      if (data.error?.trim()) detail = data.error.trim()
-    } catch {
-      /* ignore */
-    }
+    const detail = data.error?.trim() || `HTTP ${res.status}`
     console.error("[lead]", detail)
     throw new Error(`Odeslání poptávky selhalo: ${detail}`)
   }
@@ -51,6 +56,9 @@ export async function sendLead(params: LeadParams): Promise<void> {
       ? { leadValue: params.amount }
       : {}),
   })
+
+  const photoToken = data.photoToken?.trim()
+  return photoToken ? { photoToken } : {}
 }
 
 /** Rohový popup – pouze telefon. */
