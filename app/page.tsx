@@ -38,8 +38,8 @@ export default function Home() {
               </h1>
               <p className="text-sm sm:text-base lg:text-lg text-card/85 leading-relaxed max-w-lg mx-auto lg:mx-0">
                 Za hodnotu vozu vám vyplatíme hotovost a vy auto dál používáte. V technickém průkazu zůstáváte
-                provozovatelem — vůz se jen dočasně přepíše na nás, abyste mohli jezdit dál. Peníze míváte na účtu do
-                24 hodin od podpisu smlouvy.
+                provozovatelem — vůz se jen dočasně přepíše na nás, abyste mohli jezdit dál. Peníze ve většině
+                případů odesíláme ihned, maximálně však do 24 hodin po podpisu smlouvy.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 sm:gap-5 pt-1">
                 {chips.map(({ icon: Icon, label }) => (
