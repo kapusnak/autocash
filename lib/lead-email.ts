@@ -18,10 +18,7 @@ const SITE = {
   brandName: "Autocash",
   contactEmail: "info@docasnyvykup.cz",
   signOff: "Váš tým Autocash",
-  phones: [
-    { tel: "+420776680720", display: "+420 776 680 720" },
-    { tel: "+420776075150", display: "+420 776 075 150" },
-  ],
+  phones: [{ tel: "+420776075150", display: "+420 776 075 150" }],
 } as const
 
 const ACCENT = "#0d3d32"
