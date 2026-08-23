@@ -1,88 +1,115 @@
-export function StayVsChange() {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Co se změní</p>
-        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Vlastník v technickém průkazu</h3>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Vůz se dočasně přepíše na nás. Tím je dohoda zajištěná — nejde o to, že byste auto odevzdali do bazaru nebo
-          přišli o klíče.
-        </p>
-        <TpSketch />
-      </article>
+"use client"
 
-      <article className="rounded-2xl border border-primary/20 bg-card p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-wider text-primary">Co zůstane stejné</p>
-        <h3 className="font-display mt-2 text-xl font-bold text-foreground">Jezdíte dál jako dřív</h3>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Klíče máte u sebe, autem jezdíte podle potřeby a v technickém průkazu zůstáváte zapsaní jako provozovatel.
-        </p>
-        <StaySketch />
-      </article>
+import { useEffect, useRef, useState } from "react"
+import { ArrowRight, Check, Undo2 } from "lucide-react"
+
+export function StayVsChange() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.35 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className={visible ? "tp-visible" : "tp-pending"}>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="grid lg:grid-cols-2">
+          <div className="flex items-center justify-center border-b border-border bg-secondary/50 p-6 md:p-8 lg:border-b-0 lg:border-r">
+            <TpDocument />
+          </div>
+
+          <div className="flex flex-col justify-center gap-6 p-6 md:p-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Co se změní</p>
+              <h3 className="font-display mt-1.5 text-lg font-bold text-foreground">
+                Vlastníkem se dočasně staneme my
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                Zápis vlastníka je zajištěním celé dohody. Auto tím neprodáváte do bazaru ani nikam neodevzdáváte —
+                změní se jedna kolonka v dokladech.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-primary">Co zůstane stejné</p>
+              <h3 className="font-display mt-1.5 text-lg font-bold text-foreground">
+                Provozovatelem zůstáváte vy
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                Klíče i vůz máte pořád u sebe a jezdíte stejně jako dřív. Ve vašem každodenním provozu se nic nemění.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 border-t border-border bg-secondary/30 px-6 py-4 md:px-8">
+          <Undo2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Nejde o trvalý prodej. Zpětný odkup je od začátku součástí dohody — konkrétní podmínky vám řekneme hned po
+            ocenění vozu.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
 
-function TpSketch() {
+function TpDocument() {
   return (
-    <svg viewBox="0 0 220 96" className="mt-6 h-24 w-full text-primary" aria-hidden>
-      <rect x="18" y="10" width="120" height="76" rx="8" fill="currentColor" opacity="0.08" />
-      <rect x="18" y="10" width="120" height="76" rx="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
-      <text x="30" y="32" fontSize="9" fill="currentColor" opacity="0.55" fontFamily="system-ui">
-        Technický průkaz
-      </text>
-      <text x="30" y="52" fontSize="11" fill="currentColor" fontFamily="system-ui" fontWeight="700">
-        Vlastník
-      </text>
-      <text className="tp-owner" x="30" y="70" fontSize="11" fill="currentColor" fontFamily="system-ui">
-        nový vlastník
-      </text>
-      <path d="M152 48h28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-      <path d="M174 40l8 8-8 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-      <circle cx="198" cy="48" r="14" fill="currentColor" opacity="0.12" />
-      <text x="198" y="52" textAnchor="middle" fontSize="11" fill="currentColor" fontFamily="system-ui">
-        TP
-      </text>
-    </svg>
-  )
-}
+    <div className="w-full max-w-sm rounded-xl border border-border bg-background shadow-sm">
+      <div className="border-b border-border px-5 py-3">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Technický průkaz</p>
+      </div>
 
-function StaySketch() {
-  return (
-    <svg viewBox="0 0 220 96" className="mt-6 h-24 w-full text-primary" aria-hidden>
-      <g className="stay-car">
-        <path
-          d="M36 58c2-12 10-20 28-20h44c12 0 18 6 22 14l10 6v12H36V58z"
-          fill="currentColor"
-          opacity="0.15"
-        />
-        <path
-          d="M36 70h108M48 58h28l8-14h28l10 14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinejoin="round"
-          opacity="0.55"
-        />
-        <circle cx="58" cy="72" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" />
-        <circle cx="122" cy="72" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" />
-      </g>
-      <g transform="translate(168 28)">
-        <g className="stay-coin">
-          <circle cx="16" cy="16" r="16" fill="var(--gold)" />
-          <text
-            x="16"
-            y="21"
-            textAnchor="middle"
-            fontSize="12"
-            fontWeight="700"
-            fill="var(--gold-foreground)"
-            fontFamily="system-ui"
+      <div className="px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vlastník</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="tp-old relative text-sm font-semibold text-foreground">
+            Vy
+            <span className="tp-strike absolute left-0 right-0 top-1/2 h-[2px] rounded bg-foreground/70" aria-hidden />
+          </span>
+          <ArrowRight className="tp-anim h-4 w-4 text-muted-foreground" style={{ animationDelay: "0.85s" }} aria-hidden />
+          <span
+            className="tp-anim inline-flex items-center rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground"
+            style={{ animationDelay: "1s" }}
           >
-            Kč
-          </text>
-        </g>
-      </g>
-    </svg>
+            My
+          </span>
+          <span
+            className="tp-anim rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-bold text-gold-foreground"
+            style={{ animationDelay: "1.25s" }}
+          >
+            dočasně
+          </span>
+        </div>
+      </div>
+
+      <div className="border-t border-dashed border-border px-5 py-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Provozovatel</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">Vy</span>
+          <span
+            className="tp-anim inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary"
+            style={{ animationDelay: "1.55s" }}
+          >
+            <Check className="h-3 w-3" aria-hidden />
+            zůstává
+          </span>
+        </div>
+      </div>
+    </div>
   )
 }

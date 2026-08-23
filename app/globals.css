@@ -198,18 +198,6 @@
   }
 }
 
-@keyframes coin-out {
-  0%,
-  100% {
-    transform: translate(0, 0);
-    opacity: 0.95;
-  }
-  50% {
-    transform: translate(18px, -6px);
-    opacity: 1;
-  }
-}
-
 .rail-visible .rail-line {
   transform-origin: left center;
 }
@@ -235,10 +223,52 @@
   animation: rail-step-in 0.45s ease-out both;
 }
 
-.stay-coin {
-  animation: coin-out 2.8s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
+@keyframes tp-pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tp-strike-in {
+  from {
+    transform: translateY(-50%) scaleX(0);
+  }
+  to {
+    transform: translateY(-50%) scaleX(1);
+  }
+}
+
+@keyframes tp-dim {
+  to {
+    opacity: 0.45;
+  }
+}
+
+.tp-pending .tp-anim {
+  opacity: 0;
+}
+
+.tp-visible .tp-anim {
+  animation: tp-pop-in 0.4s ease-out both;
+}
+
+.tp-pending .tp-strike,
+.tp-visible .tp-strike {
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+}
+
+.tp-visible .tp-strike {
+  animation: tp-strike-in 0.35s ease-out 0.55s both;
+}
+
+.tp-visible .tp-old {
+  animation: tp-dim 0.35s ease-out 0.55s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -251,7 +281,11 @@
   .animate-pulse,
   .rail-visible .rail-line,
   .rail-visible .rail-step,
-  .stay-coin {
+  .tp-pending .tp-anim,
+  .tp-visible .tp-anim,
+  .tp-pending .tp-strike,
+  .tp-visible .tp-strike,
+  .tp-visible .tp-old {
     animation: none !important;
   }
 
@@ -259,5 +293,20 @@
   .rail-visible .rail-step {
     opacity: 1;
     transform: none;
+  }
+
+  .tp-pending .tp-anim,
+  .tp-visible .tp-anim {
+    opacity: 1;
+  }
+
+  .tp-pending .tp-strike,
+  .tp-visible .tp-strike {
+    transform: translateY(-50%) scaleX(1);
+  }
+
+  .tp-pending .tp-old,
+  .tp-visible .tp-old {
+    opacity: 0.45;
   }
 }
