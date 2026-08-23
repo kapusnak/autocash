@@ -54,14 +54,14 @@ export default function Home() {
                   href="#formular"
                   className="inline-flex lg:hidden items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-y"
                 >
-                  Vyplňte nezávaznou poptávku — ozveme se
+                  Vyplňte nezávaznou poptávku
                   <ArrowDown className="h-4 w-4 shrink-0" aria-hidden />
                 </a>
                 <div
                   className="hidden lg:inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-x select-none"
                   aria-hidden="true"
                 >
-                  Vyplňte nezávaznou poptávku — ozveme se
+                  Vyplňte nezávaznou poptávku
                   <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                 </div>
               </div>
