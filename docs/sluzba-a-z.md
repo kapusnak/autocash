@@ -46,7 +46,7 @@ Za kulisami mezi 1 a 3: **selekce a aukce** podle auta, požadované částky, t
 | | |
 |---|---|
 | Web | https://www.chytraautozastava.cz/ |
-| Firma | Auto Bez Starostí s.r.o. |
+| Firma | Dočasný výkup s.r.o. |
 | Sídlo | Jankovcova 1596/14A, Praha 7 |
 | Tel | 800 95 95 95, +420 601 222 720 |
 | E-mail | podpora@chytraautozastava.cz |

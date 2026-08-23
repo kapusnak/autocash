@@ -46,24 +46,9 @@ export default function KontaktyPage() {
                     <Phone className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Hlavní linka</p>
+                    <p className="text-sm text-muted-foreground mb-1">Telefon</p>
                     <p className="text-xl lg:text-2xl font-bold text-primary group-hover:underline">
                       {SITE.phonePrimary}
-                    </p>
-                  </div>
-                </a>
-
-                <a
-                  href={`tel:${SITE.phoneSecondaryTel}`}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors mb-4 group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <Phone className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Alternativní linka</p>
-                    <p className="text-xl lg:text-2xl font-bold text-primary group-hover:underline">
-                      {SITE.phoneSecondary}
                     </p>
                   </div>
                 </a>
@@ -101,7 +86,7 @@ export default function KontaktyPage() {
                   <div className="flex items-start gap-3">
                     <Building2 className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Jméno</p>
+                      <p className="text-sm text-muted-foreground">Firma</p>
                       <p className="font-semibold text-foreground">{SITE.controller.name}</p>
                     </div>
                   </div>

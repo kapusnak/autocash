@@ -42,15 +42,6 @@ export function SiteFooter() {
               </li>
               <li>
                 <a
-                  href={`tel:${SITE.phoneSecondaryTel}`}
-                  className="inline-flex items-center gap-2 text-primary-foreground/90 hover:text-gold transition-colors"
-                >
-                  <Phone className="h-4 w-4" />
-                  {SITE.phoneSecondary}
-                </a>
-              </li>
-              <li>
-                <a
                   href={`mailto:${SITE.email}`}
                   className="inline-flex items-center gap-2 text-primary-foreground/90 hover:text-gold transition-colors"
                 >
