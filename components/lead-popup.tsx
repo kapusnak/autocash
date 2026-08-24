@@ -12,8 +12,6 @@ import { PhoneDigitsInput } from "@/components/phone-digits-input"
 import { X, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const COOKIE_OFFSET_VAR = "--autocash-popup-bottom"
-
 type LeadPopupProps = {
   cookieBarVisible?: boolean
 }
@@ -27,11 +25,14 @@ export function LeadPopup({ cookieBarVisible = false }: LeadPopupProps) {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
 
   useEffect(() => {
+    if (cookieBarVisible) return
+
     const showTimer = setTimeout(() => {
       setIsVisible(true)
     }, 12000)
+
     return () => clearTimeout(showTimer)
-  }, [])
+  }, [cookieBarVisible])
 
   useEffect(() => {
     if (!isVisible || isClosed) return
@@ -81,21 +82,13 @@ export function LeadPopup({ cookieBarVisible = false }: LeadPopupProps) {
     }
   }
 
-  if (!isVisible || isClosed) return null
-
-  const bottomOffset = cookieBarVisible ? "calc(7.5rem + env(safe-area-inset-bottom))" : undefined
+  if (!isVisible || isClosed || cookieBarVisible) return null
 
   return (
     <>
       <div className="fixed inset-0 bg-black/25 z-40 lg:hidden" onClick={handleClose} />
 
       <div
-        style={
-          {
-            [COOKIE_OFFSET_VAR]: bottomOffset ?? "0px",
-            bottom: bottomOffset ?? undefined,
-          } as React.CSSProperties
-        }
         className={`
           fixed z-50
           bottom-0 left-0 right-0 max-h-[33vh] animate-slide-in-bottom

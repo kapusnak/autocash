@@ -43,7 +43,7 @@ export function CookieBanner({ onVisibleChange }: CookieBannerProps) {
     <div
       role="dialog"
       aria-labelledby="cookie-banner-title"
-      className="fixed bottom-0 left-0 right-0 z-[45] border-t border-border bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_24px_rgba(0,0,0,0.1)] sm:px-8"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-border bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_24px_rgba(0,0,0,0.1)] sm:px-8"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="text-sm text-muted-foreground">
