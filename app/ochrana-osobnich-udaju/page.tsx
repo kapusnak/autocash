@@ -54,8 +54,8 @@ export default function OchranaOsobnichUdajuPage() {
               <li>VIN (nepovinné)</li>
               <li>Požadovaná částka</li>
               <li>
-                Fotografie vozu (zepředu, zezadu, z boku, interiér, nákladový prostor) — na fotkách může být vidět
-                registrační značka
+                Fotografie vozu (zepředu, zezadu, z boku, interiér, nákladový prostor, nastartovaný vůz se stavem
+                km) — na fotkách může být vidět registrační značka
               </li>
             </ul>
 

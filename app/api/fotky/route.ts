@@ -96,7 +96,8 @@ export async function POST(req: Request) {
 
   const slotList = PHOTO_SLOTS.map((slot) => `- ${PHOTO_SLOT_LABELS[slot]}`).join("\n")
   const domainTag = notifyDomainTag()
-  const subject = `[${domainTag}] Fotky vozu (5) — ${payload.name || payload.phone} — ${payload.code}`
+  const photoCount = PHOTO_SLOTS.length
+  const subject = `[${domainTag}] Fotky vozu (${photoCount}) — ${payload.name || payload.phone} — ${payload.code}`
   const text = [
     `Kód poptávky: ${payload.code}`,
     `Jméno: ${payload.name || "—"}`,
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
   <p style="margin: 0 0 8px 0;"><strong>Jméno:</strong> ${escapeHtml(payload.name || "—")}</p>
   <p style="margin: 0 0 8px 0;"><strong>Telefon:</strong> <a href="tel:${escapeHtml(payload.phone)}">${escapeHtml(payload.phone)}</a></p>
   <p style="margin: 0 0 12px 0;"><strong>E-mail:</strong> <a href="mailto:${escapeHtml(payload.email)}">${escapeHtml(payload.email)}</a></p>
-  <p style="margin: 0 0 6px 0;"><strong>Přílohy (5):</strong></p>
+  <p style="margin: 0 0 6px 0;"><strong>Přílohy (${photoCount}):</strong></p>
   <ul style="margin: 0; padding-left: 18px;">
     ${PHOTO_SLOTS.map((slot) => `<li>${escapeHtml(PHOTO_SLOT_LABELS[slot])}</li>`).join("")}
   </ul>

@@ -1,3 +1,5 @@
+import { PHOTO_ANGLES_COPY, PHOTO_SLOTS } from "@/lib/photo-slots"
+
 export type LeadSource = "calculator" | "popup" | "cta"
 
 export type LeadPayload = {
@@ -20,6 +22,12 @@ const SITE = {
   signOff: "Váš tým Autocash",
   phones: [{ tel: "+420776075150", display: "+420 776 075 150" }],
 } as const
+
+const SOURCE_LABELS: Record<LeadSource, string> = {
+  calculator: "Kalkulačka",
+  popup: "Popup",
+  cta: "CTA",
+}
 
 const ACCENT = "#0d3d32"
 const CALLBACK_ONLY_SERVICE = "Není relevantní (Callback)"
@@ -68,11 +76,19 @@ function escapeHtml(value: string): string {
 
 function leadSourceUrl(): string {
   const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/$/, "")
-  const cleaned = (origin || "—")
+  const cleaned = (origin || SITE.domain)
     .replace(/^Odesláno z:\s*/i, "")
     .replace(/^https?:\/\//i, "")
     .trim()
-  return cleaned || "—"
+  return cleaned || SITE.domain
+}
+
+/** Domain + path + form channel, e.g. `autocash.cz/ · Kalkulačka`. */
+function leadSourceDisplay(source: LeadSource, pagePath?: string): string {
+  const host = leadSourceUrl()
+  const path = (pagePath ?? "").trim()
+  const base = path ? `${host}${path.startsWith("/") ? path : `/${path}`}` : host
+  return `${base} · ${SOURCE_LABELS[source]}`
 }
 
 /** Hostname for notify subject, e.g. `[autocash.cz]`. */
@@ -108,8 +124,8 @@ export type BuiltLeadEmails = {
   phoneDisplay: string
 }
 
-const PHOTO_ANGLES =
-  "zepředu, zezadu, z boku, interiér a nákladový prostor (kufr / ložná plocha)"
+const PHOTO_COUNT = PHOTO_SLOTS.length
+const PHOTO_ANGLES = PHOTO_ANGLES_COPY
 
 /** Operator notification HTML. Field order: source → name → phone → email → IP → rest. */
 function buildNotifyHtml(fields: {
@@ -257,7 +273,7 @@ function buildClientHtml(fields: {
     <p>Vaši poptávku posoudíme podle vozu a požadované částky. Ozveme se vám telefonicky nebo e-mailem.</p>
     ${
       fields.photoUrl
-        ? `<p>Pro urychlení ocenění prosíme o <strong>5 fotek vozu</strong>: ${escapeHtml(PHOTO_ANGLES)}.</p>
+        ? `<p>Pro urychlení ocenění prosíme o <strong>${PHOTO_COUNT} fotek vozu</strong>: ${escapeHtml(PHOTO_ANGLES)}.</p>
     <p style="margin: 14px 0;">
       <a href="${escapeHtml(fields.photoUrl)}" style="display: inline-block; background-color: ${ACCENT}; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: bold;">Nahrát fotky vozu</a>
     </p>
@@ -298,10 +314,8 @@ export function buildLeadEmails(
       : callback
         ? CALLBACK_ONLY_AMOUNT
         : PLACEHOLDER
-  const sourceUrl = leadSourceUrl()
   const ip = params.ip.trim() || "neznámá"
-  const pagePath = params.pagePath?.trim() || ""
-  const sourceDisplay = pagePath ? `${sourceUrl}${pagePath}` : sourceUrl
+  const sourceDisplay = leadSourceDisplay(params.source, params.pagePath)
   const domainTag = notifyDomainTag()
 
   const notifySubjectCore = callback
@@ -355,7 +369,7 @@ export function buildLeadEmails(
     ...(params.photoUrl
       ? [
           "",
-          `Pro urychlení ocenění prosíme o 5 fotek vozu (${PHOTO_ANGLES}):`,
+          `Pro urychlení ocenění prosíme o ${PHOTO_COUNT} fotek vozu (${PHOTO_ANGLES}):`,
           params.photoUrl,
         ]
       : []),
