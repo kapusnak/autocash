@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useCallback, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -198,6 +198,7 @@ const requiredStar = <span className="text-red-600">*</span>
 
 export function LoanCalculator() {
   const router = useRouter()
+  const pathname = usePathname()
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
 
   const form = useForm<CalculatorFormValues>({
@@ -245,6 +246,7 @@ export function LoanCalculator() {
         amount,
         assetType: "Automobil",
         serviceType,
+        pagePath: pathname || "/",
       })
       setSubmitStatus("success")
       form.reset({

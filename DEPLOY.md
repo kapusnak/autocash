@@ -43,7 +43,7 @@ Po cutoveru z Railway odstraňte `NEXT_PUBLIC_EMAILJS_*`. Bez rebuildu by se sta
 - [ ] Calculator → mail na `LEAD_NOTIFY_TO` včetně IP
 - [ ] Popup + CTA → callback mail
 - [ ] Calculator s e-mailem → klientské potvrzení s odkazem na fotky
-- [ ] `/fotky/…` wizard → 5 fotek → jeden mail s 5 přílohami
+- [ ] `/fotky/…` wizard → 6 fotek → jeden mail s 6 přílohami
 - [ ] Pop-up po ~12 s
 - [ ] Cookie lišta
 - [ ] `/jak-to-funguje`, `/kontakty`, GDPR, cookies

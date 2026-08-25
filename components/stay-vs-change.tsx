@@ -81,16 +81,16 @@ function TpDocument() {
             Vy
             <span className="tp-strike absolute left-0 right-0 top-1/2 h-[2px] rounded bg-foreground/70" aria-hidden />
           </span>
-          <ArrowRight className="tp-anim h-4 w-4 text-muted-foreground" style={{ animationDelay: "0.85s" }} aria-hidden />
+          <ArrowRight className="tp-anim h-4 w-4 text-muted-foreground" style={{ animationDelay: "1.7s" }} aria-hidden />
           <span
             className="tp-anim inline-flex items-center rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground"
-            style={{ animationDelay: "1s" }}
+            style={{ animationDelay: "2s" }}
           >
             My
           </span>
           <span
             className="tp-anim rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-bold text-gold-foreground"
-            style={{ animationDelay: "1.25s" }}
+            style={{ animationDelay: "2.5s" }}
           >
             dočasně
           </span>
@@ -103,12 +103,18 @@ function TpDocument() {
           <span className="text-sm font-semibold text-foreground">Vy</span>
           <span
             className="tp-anim inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary"
-            style={{ animationDelay: "1.55s" }}
+            style={{ animationDelay: "3.1s" }}
           >
             <Check className="h-3 w-3" aria-hidden />
             zůstává
           </span>
         </div>
+        <p
+          className="tp-anim mt-2 text-xs text-muted-foreground leading-relaxed"
+          style={{ animationDelay: "3.7s" }}
+        >
+          možný odkup zpět na vás
+        </p>
       </div>
     </div>
   )

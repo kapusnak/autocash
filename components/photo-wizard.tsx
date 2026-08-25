@@ -71,6 +71,17 @@ function SlotSilhouette({ slot }: { slot: PhotoSlot }) {
       </svg>
     )
   }
+  if (slot === "running") {
+    return (
+      <svg viewBox="0 0 160 90" className={common} aria-hidden>
+        <rect x="22" y="24" width="116" height="48" rx="6" fill="currentColor" opacity="0.12" />
+        <circle cx="52" cy="48" r="14" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.4" />
+        <circle cx="108" cy="48" r="14" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.4" />
+        <rect x="68" y="40" width="24" height="16" rx="2" fill="currentColor" opacity="0.35" />
+        <path d="M74 48h12" stroke="currentColor" strokeWidth="2" opacity="0.55" />
+      </svg>
+    )
+  }
   const extra =
     slot === "front"
       ? "M40 58c8-22 24-32 40-32s32 10 40 32"
@@ -178,7 +189,6 @@ export function PhotoWizard({
         /* ignore */
       }
       setDone(true)
-      toast.success("Fotky jsme dostali. Děkujeme.")
     } catch (err) {
       const hint = err instanceof Error ? err.message.trim() : ""
       toast.error("Odeslání fotek se nepovedlo", {
@@ -335,7 +345,7 @@ export function PhotoWizard({
                 Odesílám fotky…
               </>
             ) : (
-              "Odeslat všech 5 fotek"
+              `Odeslat všech ${PHOTO_SLOTS.length} fotek`
             )}
           </Button>
         ) : sending ? (
@@ -359,7 +369,7 @@ export function PhotoWizard({
           Kód poptávky <span className="font-semibold text-foreground">{code}</span>
         </p>
 
-        <div className="border-t border-border pt-4 space-y-2 text-center">
+        <div className="border-t border-border pt-4 space-y-3 text-center">
           <a
             href={whatsappHref(code)}
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
@@ -369,10 +379,14 @@ export function PhotoWizard({
             <MessageCircle className="h-4 w-4" />
             Nebo pošlete na WhatsApp a uveďte kód {code}
           </a>
-          <div>
+          <div className="space-y-1.5">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
               Teď ne, pošlu později
             </Link>
+            <p className="text-xs text-muted-foreground leading-relaxed px-1">
+              Fotografie můžete doplnit i později. Odkaz pro jejich nahrání jsme vám poslali také v e-mailu s
+              potvrzením přijetí poptávky.
+            </p>
           </div>
         </div>
       </CardContent>
