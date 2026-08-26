@@ -20,7 +20,7 @@ const SITE = {
   brandName: "Autocash",
   contactEmail: "info@docasnyvykup.cz",
   signOff: "Váš tým Autocash",
-  phones: [{ tel: "+420776075150", display: "+420 776 075 150" }],
+  phones: [{ tel: "+420776722175", display: "+420 776 722 175" }],
 } as const
 
 const SOURCE_LABELS: Record<LeadSource, string> = {

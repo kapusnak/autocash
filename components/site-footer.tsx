@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Cookie, FileText, Mail, Phone } from "lucide-react"
 
 import { SITE } from "@/lib/site"
+import { WhatsAppCard } from "@/components/whatsapp-card"
 import { ZivefirmyBadge } from "@/components/zivefirmy-badge"
 
 export function SiteFooter() {
@@ -39,6 +40,9 @@ export function SiteFooter() {
                   <Phone className="h-4 w-4" />
                   {SITE.phonePrimary}
                 </a>
+              </li>
+              <li>
+                <WhatsAppCard variant="dark" />
               </li>
               <li>
                 <a

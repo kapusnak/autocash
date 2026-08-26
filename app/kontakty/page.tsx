@@ -4,6 +4,7 @@ import { Building2, Clock, FileText, Mail, MapPin, Phone } from "lucide-react"
 import { Header } from "@/components/header"
 import { CtaSection } from "@/components/cta-section"
 import { SiteFooter } from "@/components/site-footer"
+import { WhatsAppCard } from "@/components/whatsapp-card"
 import { ZivefirmyBadge } from "@/components/zivefirmy-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { SITE } from "@/lib/site"
@@ -52,6 +53,10 @@ export default function KontaktyPage() {
                     </p>
                   </div>
                 </a>
+
+                <div className="mb-4">
+                  <WhatsAppCard />
+                </div>
 
                 <a
                   href={`mailto:${SITE.email}`}
