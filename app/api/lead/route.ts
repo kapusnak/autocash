@@ -43,9 +43,10 @@ function parseBody(raw: unknown): LeadPayload | null {
     ...(typeof o.email === "string" ? { email: o.email } : {}),
     ...(typeof o.name === "string" ? { name: o.name } : {}),
     ...(amount != null ? { amount } : {}),
-    ...(typeof o.assetType === "string" ? { assetType: o.assetType } : {}),
-    ...(typeof o.serviceType === "string" ? { serviceType: o.serviceType } : {}),
-    ...(typeof o.propertyAddress === "string" ? { propertyAddress: o.propertyAddress } : {}),
+    ...(typeof o.vehicleModel === "string" ? { vehicleModel: o.vehicleModel } : {}),
+    ...(typeof o.vehicleYear === "string" ? { vehicleYear: o.vehicleYear } : {}),
+    ...(typeof o.vehicleMileage === "string" ? { vehicleMileage: o.vehicleMileage } : {}),
+    ...(typeof o.vehicleVin === "string" ? { vehicleVin: o.vehicleVin } : {}),
     ...(typeof o.pagePath === "string" ? { pagePath: o.pagePath } : {}),
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { PHOTO_SLOT_LABELS, PHOTO_SLOTS, type PhotoSlot } from "@/lib/photo-slots"
+import { PHOTO_SLOT_LABELS, PHOTO_SLOTS, photoSlotFilename, type PhotoSlot } from "@/lib/photo-slots"
 import { verifyPhotoToken } from "@/lib/photo-token"
 import { getMailer, leadNotifyTo, mailFromAddress } from "@/lib/mailer"
 
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(await file.arrayBuffer())
       const ext = file.type === "image/webp" ? "webp" : "jpg"
       return {
-        filename: `${payload.code}-${slot}.${ext}`,
+        filename: photoSlotFilename(payload.code, slot, ext),
         content: buffer,
         contentType: file.type,
       }

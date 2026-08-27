@@ -235,17 +235,17 @@ export function LoanCalculator() {
     try {
       const name = `${values.firstName.trim()} ${values.lastName.trim()}`.trim()
       const amount = snapToCarValue(values.vehicleAmountCzk)
-      const vinPart = values.vin.trim() ? `, VIN ${values.vin.trim()}` : ""
-      const serviceType = `Peníze ihned a jezděte dál — ${values.vehicleModel.trim()}, r.v. ${values.year.trim()}, ${values.mileage.trim()} km${vinPart}`
-
+      const vin = values.vin.trim()
       const result = await sendLead({
         source: "calculator",
         phone,
         email: values.email.trim(),
         name,
         amount,
-        assetType: "Automobil",
-        serviceType,
+        vehicleModel: values.vehicleModel.trim(),
+        vehicleYear: values.year.trim(),
+        vehicleMileage: values.mileage.trim(),
+        ...(vin ? { vehicleVin: vin } : {}),
         pagePath: pathname || "/",
       })
       setSubmitStatus("success")

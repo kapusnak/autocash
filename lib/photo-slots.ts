@@ -11,6 +11,15 @@ export const PHOTO_SLOT_LABELS: Record<PhotoSlot, string> = {
   running: "Nastartovaný vůz",
 }
 
+/** Attachment filename stem (Czech label without diacritics, spaces → hyphens). */
+export function photoSlotFilename(code: string, slot: PhotoSlot, ext: string): string {
+  const label = PHOTO_SLOT_LABELS[slot]
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, "-")
+  return `${code}-${label}.${ext}`
+}
+
 export const PHOTO_SLOT_HINTS: Record<PhotoSlot, string> = {
   front: "Celé auto zepředu, včetně SPZ. Ideálně za dne, auto celé v záběru.",
   rear: "Celé auto zezadu, včetně SPZ.",

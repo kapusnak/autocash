@@ -6,9 +6,10 @@ export type LeadParams = {
   email?: string
   name?: string
   amount?: number
-  assetType?: string
-  serviceType?: string
-  propertyAddress?: string
+  vehicleModel?: string
+  vehicleYear?: string
+  vehicleMileage?: string
+  vehicleVin?: string
   /** Current path for GA (e.g. /kontakty); set for popup/cta phone leads */
   pagePath?: string
 }
@@ -27,9 +28,10 @@ export async function sendLead(params: LeadParams): Promise<SendLeadResult> {
       ...(params.email != null ? { email: params.email } : {}),
       ...(params.name != null ? { name: params.name } : {}),
       ...(params.amount != null ? { amount: params.amount } : {}),
-      ...(params.assetType != null ? { assetType: params.assetType } : {}),
-      ...(params.serviceType != null ? { serviceType: params.serviceType } : {}),
-      ...(params.propertyAddress != null ? { propertyAddress: params.propertyAddress } : {}),
+      ...(params.vehicleModel != null ? { vehicleModel: params.vehicleModel } : {}),
+      ...(params.vehicleYear != null ? { vehicleYear: params.vehicleYear } : {}),
+      ...(params.vehicleMileage != null ? { vehicleMileage: params.vehicleMileage } : {}),
+      ...(params.vehicleVin != null ? { vehicleVin: params.vehicleVin } : {}),
       ...(params.pagePath != null ? { pagePath: params.pagePath } : {}),
     }),
   })

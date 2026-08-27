@@ -8,9 +8,10 @@ export type LeadPayload = {
   email?: string
   name?: string
   amount?: number
-  assetType?: string
-  serviceType?: string
-  propertyAddress?: string
+  vehicleModel?: string
+  vehicleYear?: string
+  vehicleMileage?: string
+  vehicleVin?: string
   pagePath?: string
 }
 
@@ -23,16 +24,59 @@ const SITE = {
   phones: [{ tel: "+420776722175", display: "+420 776 722 175" }],
 } as const
 
-const SOURCE_LABELS: Record<LeadSource, string> = {
-  calculator: "Kalkulačka",
-  popup: "Popup",
-  cta: "CTA",
-}
-
 const ACCENT = "#0d3d32"
-const CALLBACK_ONLY_SERVICE = "Není relevantní (Callback)"
 const CALLBACK_ONLY_AMOUNT = "--- Pouze požadavek na zavolání ---"
 const PLACEHOLDER = "---"
+
+type VehicleDetails = {
+  model: string
+  year: string
+  mileage: string
+  vin: string
+}
+
+function vehicleDetailsFromPayload(params: LeadPayload, callback: boolean): VehicleDetails | null {
+  if (callback) return null
+  const model = params.vehicleModel?.trim() ?? ""
+  const year = params.vehicleYear?.trim() ?? ""
+  const mileage = params.vehicleMileage?.trim() ?? ""
+  const vin = params.vehicleVin?.trim() ?? ""
+  if (!model && !year && !mileage && !vin) return null
+  return {
+    model: model || PLACEHOLDER,
+    year: year || PLACEHOLDER,
+    mileage: mileage ? `${mileage} km` : PLACEHOLDER,
+    vin: vin || PLACEHOLDER,
+  }
+}
+
+function vehicleTextLines(vehicle: VehicleDetails): string[] {
+  return [
+    `Značka a model vozu: ${vehicle.model}`,
+    `Rok výroby: ${vehicle.year}`,
+    `Najeté km: ${vehicle.mileage}`,
+    `VIN: ${vehicle.vin}`,
+  ]
+}
+
+function kvRow(label: string, value: string): string {
+  return `<tr>
+          <td style="padding: 5px 0; width: 45%; vertical-align: top;"><strong>${escapeHtml(label)}:</strong></td>
+          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(value)}</td>
+        </tr>`
+}
+
+function vehicleHtmlRows(vehicle: VehicleDetails | null): string {
+  if (!vehicle) return ""
+  return `
+        <tr>
+          <td colspan="2" style="padding: 5px 0; border-top: 1px dashed #cccccc;"></td>
+        </tr>
+        ${kvRow("Značka a model vozu", vehicle.model)}
+        ${kvRow("Rok výroby", vehicle.year)}
+        ${kvRow("Najeté km", vehicle.mileage)}
+        ${kvRow("VIN", vehicle.vin)}`
+}
 
 /**
  * Compact E.164-style number for `tel:` links (no spaces).
@@ -74,24 +118,7 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;")
 }
 
-function leadSourceUrl(): string {
-  const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/$/, "")
-  const cleaned = (origin || SITE.domain)
-    .replace(/^Odesláno z:\s*/i, "")
-    .replace(/^https?:\/\//i, "")
-    .trim()
-  return cleaned || SITE.domain
-}
-
-/** Domain + path + form channel, e.g. `autocash.cz/ · Kalkulačka`. */
-function leadSourceDisplay(source: LeadSource, pagePath?: string): string {
-  const host = leadSourceUrl()
-  const path = (pagePath ?? "").trim()
-  const base = path ? `${host}${path.startsWith("/") ? path : `/${path}`}` : host
-  return `${base} · ${SOURCE_LABELS[source]}`
-}
-
-/** Hostname for notify subject, e.g. `[autocash.cz]`. */
+/** Hostname for notify subject and Zdroj, e.g. `autocash.cz`. */
 function notifyDomainTag(): string {
   const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim()
   if (origin) {
@@ -134,11 +161,9 @@ function buildNotifyHtml(fields: {
   phoneTel: string
   phoneDisplay: string
   email: string
-  propertyAddress: string
-  propertyType: string
-  serviceType: string
   amount: string
   ip: string
+  vehicle: VehicleDetails | null
   photoCode?: string
   photoUrl?: string
 }): string {
@@ -182,29 +207,8 @@ function buildNotifyHtml(fields: {
           <td style="padding: 5px 0;"><strong>IP adresa:</strong></td>
           <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.ip)}</td>
         </tr>
-        <tr>
-          <td colspan="2" style="padding: 5px 0; border-top: 1px dashed #cccccc;"></td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0;"><strong>Adresa nemovitosti:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.propertyAddress)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0;"><strong>Typ zajištění:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.propertyType)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0;"><strong>Požadovaná služba:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.serviceType)}</td>
-        </tr>
-        ${
-          fields.photoCode
-            ? `<tr>
-          <td style="padding: 5px 0;"><strong>Kód poptávky:</strong></td>
-          <td style="padding: 5px 0; text-align: right; font-weight: 500;">${escapeHtml(fields.photoCode)}</td>
-        </tr>`
-            : ""
-        }
+        ${vehicleHtmlRows(fields.vehicle)}
+        ${fields.photoCode ? kvRow("Kód poptávky", fields.photoCode) : ""}
       </tbody>
     </table>
   </div>
@@ -212,9 +216,7 @@ function buildNotifyHtml(fields: {
     fields.photoUrl
       ? `<div style="margin-top: 16px; padding: 12px; background-color: #f7f7f7; border-radius: 6px;">
     <div style="font-size: 13px; font-weight: bold; color: ${ACCENT}; margin-bottom: 6px;">Fotky vozu</div>
-    <div style="font-size: 13px; line-height: 1.5;">Klient může nahrát ${escapeHtml(PHOTO_ANGLES)} zde:<br>
-      <a href="${escapeHtml(fields.photoUrl)}" style="color: ${ACCENT};">${escapeHtml(fields.photoUrl)}</a>
-    </div>
+    <div style="font-size: 13px; line-height: 1.5;">Klientovi můžete během další komunikace s ním zaslat <a href="${escapeHtml(fields.photoUrl)}" style="color: ${ACCENT}; font-weight: bold;">tento unikátní odkaz</a>, na kterém nahraje fotografie automobilu.</div>
   </div>`
       : ""
   }
@@ -228,9 +230,8 @@ function buildNotifyHtml(fields: {
 /** Client confirmation HTML — cars-only Autocash copy. */
 function buildClientHtml(fields: {
   name: string
-  propertyType: string
-  serviceType: string
   amount: string
+  vehicle: VehicleDetails | null
   photoUrl?: string
 }): string {
   const phoneLines = SITE.phones
@@ -253,14 +254,14 @@ function buildClientHtml(fields: {
           <td style="padding: 5px 0; width: 50%;"><strong>Jméno:</strong></td>
           <td style="padding: 5px 0; text-align: right;">${escapeHtml(fields.name)}</td>
         </tr>
-        <tr>
-          <td style="padding: 5px 0;"><strong>Typ zajištění:</strong></td>
-          <td style="padding: 5px 0; text-align: right;">${escapeHtml(fields.propertyType)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0;"><strong>Typ služby:</strong></td>
-          <td style="padding: 5px 0; text-align: right;">${escapeHtml(fields.serviceType)}</td>
-        </tr>
+        ${
+          fields.vehicle
+            ? `${kvRow("Značka a model vozu", fields.vehicle.model)}
+        ${kvRow("Rok výroby", fields.vehicle.year)}
+        ${kvRow("Najeté km", fields.vehicle.mileage)}
+        ${kvRow("VIN", fields.vehicle.vin)}`
+            : ""
+        }
       </tbody>
     </table>
     <div style="margin-top: 15px; padding: 10px; background-color: #ecfdf5; border: 1px solid ${ACCENT}; border-radius: 6px; text-align: center;">
@@ -301,13 +302,11 @@ export function buildLeadEmails(
   params: LeadPayload & { ip: string; photoUrl?: string; photoCode?: string },
 ): BuiltLeadEmails {
   const callback = isCallbackOnly(params.source)
-  const propertyType = callback ? PLACEHOLDER : (params.assetType?.trim() || PLACEHOLDER)
-  const propertyAddress = callback ? PLACEHOLDER : (params.propertyAddress?.trim() || PLACEHOLDER)
+  const vehicle = vehicleDetailsFromPayload(params, callback)
   const phoneTel = normalizePhoneForTel(params.phone)
   const phoneDisplay = formatPhoneDisplayForNotification(params.phone) || params.phone.trim()
   const name = callback ? PLACEHOLDER : (params.name?.trim() || PLACEHOLDER)
   const email = (params.email ?? "").trim()
-  const serviceType = callback ? CALLBACK_ONLY_SERVICE : (params.serviceType?.trim() || PLACEHOLDER)
   const amount =
     params.amount != null
       ? formatAmountCzk(params.amount)
@@ -315,8 +314,8 @@ export function buildLeadEmails(
         ? CALLBACK_ONLY_AMOUNT
         : PLACEHOLDER
   const ip = params.ip.trim() || "neznámá"
-  const sourceDisplay = leadSourceDisplay(params.source, params.pagePath)
-  const domainTag = notifyDomainTag()
+  const sourceDisplay = notifyDomainTag()
+  const domainTag = sourceDisplay
 
   const notifySubjectCore = callback
     ? `Callback – ${phoneDisplay}`
@@ -329,12 +328,14 @@ export function buildLeadEmails(
     `Telefon: ${phoneDisplay}`,
     `E-mail: ${email || PLACEHOLDER}`,
     `IP adresa: ${ip}`,
-    `Adresa nemovitosti: ${propertyAddress}`,
-    `Typ zajištění: ${propertyType}`,
-    `Požadovaná služba: ${serviceType}`,
+    ...(vehicle ? vehicleTextLines(vehicle) : []),
     `Částka: ${amount}`,
     ...(params.photoCode ? [`Kód poptávky: ${params.photoCode}`] : []),
-    ...(params.photoUrl ? [`Fotky vozu: ${params.photoUrl}`] : []),
+    ...(params.photoUrl
+      ? [
+          `Fotky vozu: Klientovi můžete během další komunikace s ním zaslat tento unikátní odkaz, na kterém nahraje fotografie automobilu: ${params.photoUrl}`,
+        ]
+      : []),
   ].join("\n")
 
   const notifyHtml = buildNotifyHtml({
@@ -343,11 +344,9 @@ export function buildLeadEmails(
     phoneTel: phoneTel || params.phone.trim(),
     phoneDisplay,
     email,
-    propertyAddress,
-    propertyType,
-    serviceType,
     amount,
     ip,
+    vehicle,
     ...(params.photoCode ? { photoCode: params.photoCode } : {}),
     ...(params.photoUrl ? { photoUrl: params.photoUrl } : {}),
   })
@@ -361,8 +360,7 @@ export function buildLeadEmails(
     "Potvrzujeme, že jsme Vaši žádost o financování zajištěné vozidlem přijali. Brzy se s Vámi spojíme.",
     "",
     `Jméno: ${clientNameForBody}`,
-    `Typ zajištění: ${propertyType}`,
-    `Typ služby: ${serviceType}`,
+    ...(vehicle ? vehicleTextLines(vehicle) : []),
     `Požadovaná částka: ${amount}`,
     "",
     "Obvykle se ozveme během pracovní doby.",
@@ -383,9 +381,8 @@ export function buildLeadEmails(
 
   const clientHtml = buildClientHtml({
     name: clientNameForBody,
-    propertyType,
-    serviceType,
     amount,
+    vehicle,
     ...(params.photoUrl ? { photoUrl: params.photoUrl } : {}),
   })
 
