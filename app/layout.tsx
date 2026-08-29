@@ -6,6 +6,7 @@ import { FormularHashScroll } from "@/components/formular-hash-scroll"
 import { GoogleAdsGtag } from "@/components/google-ads-gtag"
 import { GoogleAnalytics } from "@/components/google-analytics"
 import { GoogleTagManager } from "@/components/google-tag-manager"
+import { SeznamRetargeting } from "@/components/seznam-retargeting"
 import "./globals.css"
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -75,6 +76,7 @@ export default function RootLayout({
         <FormularHashScroll />
         {children}
         <GoogleAnalytics />
+        <SeznamRetargeting />
         <AppToaster />
       </body>
     </html>
