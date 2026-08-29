@@ -3,7 +3,7 @@
 import { startTransition, useEffect, useState } from "react"
 import Link from "next/link"
 
-const STORAGE_KEY = "autocash-cookie-consent"
+import { COOKIE_CONSENT_STORAGE_KEY, persistCookieConsentAccepted } from "@/lib/cookie-consent"
 
 type CookieBannerProps = {
   onVisibleChange?: (visible: boolean) => void
@@ -15,7 +15,7 @@ export function CookieBanner({ onVisibleChange }: CookieBannerProps) {
   useEffect(() => {
     startTransition(() => {
       try {
-        if (!localStorage.getItem(STORAGE_KEY)) {
+        if (!localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY)) {
           setShow(true)
         }
       } catch {
@@ -29,11 +29,7 @@ export function CookieBanner({ onVisibleChange }: CookieBannerProps) {
   }, [show, onVisibleChange])
 
   function accept() {
-    try {
-      localStorage.setItem(STORAGE_KEY, "accepted")
-    } catch {
-      /* ignore */
-    }
+    persistCookieConsentAccepted()
     setShow(false)
   }
 
