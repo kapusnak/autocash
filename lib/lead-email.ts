@@ -139,6 +139,25 @@ function isCallbackOnly(source: LeadSource): boolean {
   return source === "cta" || source === "popup"
 }
 
+/**
+ * Operator inbox subject. Client name first (after the domain tag) so it stays
+ * visible on mobile, same idea as docasnyvykup / hnedpenize.
+ */
+export function operatorNotifySubject(options: {
+  domainTag: string
+  callback: boolean
+  name: string
+  phoneDisplay: string
+}): string {
+  const who = options.name !== PLACEHOLDER ? options.name : options.phoneDisplay
+  const core = options.callback
+    ? options.name !== PLACEHOLDER
+      ? `${who} – Callback`
+      : `Callback – ${who}`
+    : `${who} – Nová poptávka`
+  return `[${options.domainTag}] ${core}`
+}
+
 export type BuiltLeadEmails = {
   notifySubject: string
   notifyText: string
@@ -181,7 +200,11 @@ function buildNotifyHtml(fields: {
       <span style="color: ${ACCENT};">🚗</span>
     </div>
     <div style="color: ${ACCENT}; font-size: 17px; font-weight: bold; margin-left: 10px;">
-      AUTOCASH — NOVÁ POPTÁVKA
+      ${escapeHtml(
+        fields.name !== PLACEHOLDER
+          ? `AUTOCASH — NOVÁ POPTÁVKA — ${fields.name}`
+          : "AUTOCASH — NOVÁ POPTÁVKA",
+      )}
     </div>
   </div>
   <div style="padding: 10px 0;">
@@ -305,7 +328,7 @@ export function buildLeadEmails(
   const vehicle = vehicleDetailsFromPayload(params, callback)
   const phoneTel = normalizePhoneForTel(params.phone)
   const phoneDisplay = formatPhoneDisplayForNotification(params.phone) || params.phone.trim()
-  const name = callback ? PLACEHOLDER : (params.name?.trim() || PLACEHOLDER)
+  const name = params.name?.trim() || PLACEHOLDER
   const email = (params.email ?? "").trim()
   const amount =
     params.amount != null
@@ -317,10 +340,12 @@ export function buildLeadEmails(
   const sourceDisplay = notifyDomainTag()
   const domainTag = sourceDisplay
 
-  const notifySubjectCore = callback
-    ? `Callback – ${phoneDisplay}`
-    : `Nová poptávka – ${name !== PLACEHOLDER ? name : phoneDisplay}`
-  const notifySubject = `[${domainTag}] ${notifySubjectCore}`
+  const notifySubject = operatorNotifySubject({
+    domainTag,
+    callback,
+    name,
+    phoneDisplay,
+  })
 
   const notifyText = [
     `Zdroj: ${sourceDisplay}`,
