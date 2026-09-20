@@ -1,0 +1,67 @@
+/**
+ * Practical crawler / preview-bot detection for the flyer QR landing page.
+ * Not a security boundary — just avoids counting obvious non-human hits.
+ */
+const CRAWLER_UA_TOKENS = [
+  "googlebot",
+  "adsbot-google",
+  "apis-google",
+  "mediapartners-google",
+  "storebot-google",
+  "google-inspectiontool",
+  "google-read-aloud",
+  "googleother",
+  "bingbot",
+  "bingpreview",
+  "yandexbot",
+  "yandeximages",
+  "baiduspider",
+  "duckduckbot",
+  "slurp",
+  "applebot",
+  "facebookexternalhit",
+  "facebot",
+  "meta-externalagent",
+  "twitterbot",
+  "linkedinbot",
+  "pinterestbot",
+  "slackbot",
+  "telegrambot",
+  "whatsapp",
+  "discordbot",
+  "embedly",
+  "quora link preview",
+  "vkshare",
+  "semrush",
+  "ahrefsbot",
+  "mj12bot",
+  "dotbot",
+  "petalbot",
+  "bytespider",
+  "gptbot",
+  "chatgpt-user",
+  "claudebot",
+  "anthropic",
+  "perplexity",
+  "ccbot",
+  "amazonbot",
+  "ia_archiver",
+  "pingdom",
+  "uptimerobot",
+  "headlesschrome",
+  "phantomjs",
+  "lighthouse",
+  "pagespeed",
+  "gtmetrix",
+  "screaming frog",
+  "seznambot",
+  "seznam screenshot",
+  "crawler",
+  "spider",
+] as const
+
+export function isCrawlerUserAgent(userAgent: string | null | undefined): boolean {
+  if (!userAgent) return false
+  const ua = userAgent.toLowerCase()
+  return CRAWLER_UA_TOKENS.some((token) => ua.includes(token))
+}

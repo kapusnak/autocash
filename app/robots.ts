@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/fotky/",
+      disallow: ["/fotky/", "/qr"],
     },
     sitemap: `${base}/sitemap.xml`,
   }
