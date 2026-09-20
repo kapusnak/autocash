@@ -45,12 +45,6 @@ export function QrLetakRedirect() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 text-center">
       <p className="text-sm text-muted-foreground">Přesměrováváme…</p>
-      <a
-        href="/"
-        className="mt-4 text-sm font-medium text-primary underline-offset-2 hover:underline"
-      >
-        Pokračovat na Autocash
-      </a>
     </main>
   )
 }
