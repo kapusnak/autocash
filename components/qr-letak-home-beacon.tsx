@@ -3,19 +3,17 @@
 import { useEffect } from "react"
 
 import { isCrawlerUserAgent } from "@/lib/crawler-user-agent"
-import { clearQrLetakFlag, hasPendingQrLetak, trackQrLetak } from "@/lib/track-qr-letak"
+import { hasPendingQrLetak, trackQrLetak } from "@/lib/track-qr-letak"
 
 /**
- * Safety net for GTM-only: if /qr redirected before the container was ready,
- * fire `qr_letak` once on the homepage (a page that stays loaded so GTM can
- * process the dataLayer queue).
+ * Safety net: replay `qr_letak` on the homepage only if /qr never completed
+ * a dataLayer/gtag handoff (pending flag still set).
  */
 export function QrLetakHomeBeacon() {
   useEffect(() => {
     if (isCrawlerUserAgent(navigator.userAgent) || navigator.webdriver) return
     if (window.location.pathname === "/qr") return
     if (!hasPendingQrLetak()) return
-    clearQrLetakFlag()
     trackQrLetak()
   }, [])
 

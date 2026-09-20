@@ -101,12 +101,12 @@ export function clearQrLetakFlag(): void {
 }
 
 /**
- * Fires `qr_letak` through the same pipes as the rest of the site:
- * - `dataLayer.push({ event })` so GTM Custom Event `CE - qr_letak` can send GA4
- * - `gtag('event', …)` when gtag is present (direct GA or GTM-injected)
+ * Fires `qr_letak` on exactly one pipe so GA4 does not double-count:
+ * - GTM configured → `dataLayer.push({ event: 'qr_letak' })` only (CE + GA4 Event tag)
+ * - GTM off, direct GA measurement ID → `gtag('event', 'qr_letak')` only
  *
- * If both GTM and `NEXT_PUBLIC_GA_MEASUREMENT_ID` send this event to the same
- * GA4 property, do not also add a GTM GA4 Event tag — that would double-count.
+ * Marks the sessionStorage flag sent as soon as that handoff succeeds so the
+ * homepage beacon does not fire a second copy.
  */
 export function trackQrLetak(options?: TrackQrLetakOptions): void {
   if (typeof window === "undefined") return
@@ -118,21 +118,27 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     options?.onDone?.()
   }
 
-  window.setTimeout(done, HAS_ANALYTICS ? QR_REDIRECT_HOLD_MS : 400)
+  const holdMs = HAS_ANALYTICS ? QR_REDIRECT_HOLD_MS : 400
+  window.setTimeout(done, holdMs)
 
-  window.dataLayer = window.dataLayer || []
-  window.dataLayer.push({
-    event: GA_EVENT_QR_LETAK,
-    ...QR_LETAK_CAMPAIGN,
-  })
+  if (HAS_GTM) {
+    window.dataLayer = window.dataLayer || []
+    window.dataLayer.push({
+      event: GA_EVENT_QR_LETAK,
+      ...QR_LETAK_CAMPAIGN,
+    })
+    markQrLetakSent()
+    return
+  }
 
   const gtag = window.gtag
-  if (typeof gtag !== "function") return
-
-  gtag("set", QR_LETAK_CAMPAIGN)
-  gtag("event", GA_EVENT_QR_LETAK, {
-    ...QR_LETAK_CAMPAIGN,
-    event_callback: done,
-    event_timeout: QR_REDIRECT_HOLD_MS,
-  })
+  if (HAS_GA && typeof gtag === "function") {
+    gtag("set", QR_LETAK_CAMPAIGN)
+    gtag("event", GA_EVENT_QR_LETAK, {
+      ...QR_LETAK_CAMPAIGN,
+      event_callback: done,
+      event_timeout: holdMs,
+    })
+    markQrLetakSent()
+  }
 }
