@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, Car, Clock, MapPin, Shield } from "lucide-react"
 import { Header } from "@/components/header"
 import { LoanCalculator } from "@/components/loan-calculator"
 import { BottomChrome } from "@/components/bottom-chrome"
+import { QrLetakHomeBeacon } from "@/components/qr-letak-home-beacon"
 import { ProcessRail } from "@/components/process-rail"
 import { StayVsChange } from "@/components/stay-vs-change"
 import { FaqSection } from "@/components/faq-section"
@@ -19,6 +20,7 @@ const chips = [
 export default function Home() {
   return (
     <main className="min-h-dvh flex flex-col">
+      <QrLetakHomeBeacon />
       <BottomChrome />
 
       <section className="relative flex flex-col bg-gradient-to-b from-emerald-500 via-primary to-emerald-950 min-h-[100dvh] lg:min-h-0 lg:pt-0">
