@@ -3,13 +3,7 @@
 import { useEffect } from "react"
 
 import { isCrawlerUserAgent } from "@/lib/crawler-user-agent"
-import {
-  isAnalyticsReady,
-  markQrLetakPending,
-  markQrLetakSent,
-  trackQrLetak,
-  waitForAnalytics,
-} from "@/lib/track-qr-letak"
+import { markQrLetakPending, trackQrLetak, waitForAnalytics } from "@/lib/track-qr-letak"
 
 function goHome() {
   window.location.replace("/")
@@ -25,13 +19,16 @@ export function QrLetakRedirect() {
     let cancelled = false
     markQrLetakPending()
 
-    void waitForAnalytics().then(() => {
+    void waitForAnalytics().then((ready) => {
       if (cancelled) return
+      if (!ready) {
+        // No successful handoff — keep pending so the homepage fires once.
+        goHome()
+        return
+      }
       trackQrLetak({
         onDone: () => {
           if (cancelled) return
-          // Container was up long enough to process the push — skip homepage retry.
-          if (isAnalyticsReady()) markQrLetakSent()
           goHome()
         },
       })
