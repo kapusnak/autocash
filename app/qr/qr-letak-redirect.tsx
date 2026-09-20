@@ -3,7 +3,13 @@
 import { useEffect } from "react"
 
 import { isCrawlerUserAgent } from "@/lib/crawler-user-agent"
-import { trackQrLetak, waitForGtag } from "@/lib/track-qr-letak"
+import {
+  isAnalyticsReady,
+  markQrLetakPending,
+  markQrLetakSent,
+  trackQrLetak,
+  waitForAnalytics,
+} from "@/lib/track-qr-letak"
 
 function goHome() {
   window.location.replace("/")
@@ -17,12 +23,16 @@ export function QrLetakRedirect() {
     }
 
     let cancelled = false
+    markQrLetakPending()
 
-    void waitForGtag().then(() => {
+    void waitForAnalytics().then(() => {
       if (cancelled) return
       trackQrLetak({
         onDone: () => {
-          if (!cancelled) goHome()
+          if (cancelled) return
+          // Container was up long enough to process the push — skip homepage retry.
+          if (isAnalyticsReady()) markQrLetakSent()
+          goHome()
         },
       })
     })
