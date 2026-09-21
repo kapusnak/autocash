@@ -22,7 +22,7 @@ export function QrLetakRedirect() {
     void waitForAnalytics().then((ready) => {
       if (cancelled) return
       if (!ready) {
-        // No successful handoff — keep pending so the homepage fires once.
+        // gtag never appeared — keep pending so the homepage fires once.
         goHome()
         return
       }
