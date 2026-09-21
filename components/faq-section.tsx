@@ -19,11 +19,6 @@ const faqs = [
       "Záleží na značce, roku výroby, stavu a nájezdu. Konkrétní nabídku vám připravíme po ocenění vozu — na webu slibovat přesné procento z ceny nedává smysl.",
   },
   {
-    question: "Jak pošlu fotky auta?",
-    answer:
-      "Nafocení vozu je jednoduché: po odeslání nezávazné poptávky vám přijde e-mail s odkazem. Otevřete ho v mobilu, vyfotíte auto podle návodu a odešlete — nic instalovat nemusíte.",
-  },
-  {
     question: "Jak rychle dostanu peníze?",
     answer:
       "Jakmile se dohodneme na částce a podepíšete smlouvu, peníze obvykle dorazí na účet do 24 hodin.",

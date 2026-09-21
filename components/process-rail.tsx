@@ -7,12 +7,12 @@ const STEPS = [
   {
     icon: Send,
     title: "Pošlete poptávku",
-    hint: "Vyplníte krátký formulář nebo zavoláte. Po odeslání poptávky vám přijde e-mail s odkazem — auto vyfotíte v mobilu podle návodu, nic instalovat nemusíte.",
+    hint: "Vyplníte krátký formulář nebo zavoláte. Ozveme se vám a probereme detaily.",
   },
   {
     icon: ClipboardCheck,
     title: "Oceníme vůz",
-    hint: "Podle fotek, značky, roku výroby, stavu a nájezdu připravíme konkrétní nabídku.",
+    hint: "Posoudíme značku, rok výroby, stav a nájezd a připravíme vám konkrétní nabídku.",
   },
   {
     icon: FilePenLine,
