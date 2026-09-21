@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight, Car, Clock, MapPin, Shield } from "lucide-react"
 
 import { Header } from "@/components/header"
+import { HeroCarBackdrop } from "@/components/hero-car-backdrop"
 import { LoanCalculator } from "@/components/loan-calculator"
 import { BottomChrome } from "@/components/bottom-chrome"
 import { QrLetakHomeBeacon } from "@/components/qr-letak-home-beacon"
@@ -23,10 +24,11 @@ export default function Home() {
       <QrLetakHomeBeacon />
       <BottomChrome />
 
-      <section className="relative flex flex-col bg-gradient-to-b from-emerald-500 via-primary to-emerald-950 min-h-[100dvh] lg:min-h-0 lg:pt-0">
+      <section className="relative flex flex-col overflow-hidden bg-gradient-to-b from-emerald-500 via-primary to-emerald-950 min-h-[100dvh] lg:min-h-0 lg:pt-0">
+        <HeroCarBackdrop />
         <Header />
 
-        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 opacity-15 pointer-events-none overflow-hidden">
           <div className="absolute top-24 left-8 w-56 sm:w-80 h-56 sm:h-80 rounded-full bg-gold blur-3xl animate-pulse" />
           <div className="absolute bottom-16 right-4 w-72 sm:w-[28rem] h-72 sm:h-[28rem] rounded-full bg-emerald-200/40 blur-3xl" />
         </div>
@@ -81,7 +83,8 @@ export default function Home() {
           <div className="max-w-2xl mx-auto text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Jak to probíhá</h2>
             <p className="mt-3 text-muted-foreground">
-              Od poptávky k penězům na účtu. Bez žádosti v bance a bez týdnů čekání.
+              Od poptávky k penězům na účtu. Po odeslání vám přijde e-mail s odkazem — auto vyfotíte v mobilu, nic
+              instalovat nemusíte.
             </p>
           </div>
           <div className="max-w-5xl mx-auto">
