@@ -12,7 +12,7 @@ export function HeroCarBackdrop() {
           fill
           priority
           sizes="(max-width: 767px) 800px, 1280px"
-          className="hero-car-photo object-cover object-[78%_58%] sm:object-[80%_52%] lg:object-[82%_48%]"
+          className="hero-car-photo object-cover object-[42%_58%] sm:object-[44%_52%] lg:object-[40%_48%]"
         />
       </picture>
       {/* Left-weighted wash: copy sits on the open road; the car stays clear on the right. */}
