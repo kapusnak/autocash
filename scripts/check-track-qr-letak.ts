@@ -31,8 +31,14 @@ function gtagMock(...args: unknown[]) {
   }
 }
 
-const fakeWindow = {
-  gtag: undefined as undefined | typeof gtagMock,
+const fakeWindow: {
+  gtag?: typeof gtagMock
+  dataLayer: unknown[]
+  google_tag_manager?: Record<string, unknown>
+  setTimeout: typeof setTimeout
+  sessionStorage: MemoryStorage
+} = {
+  gtag: undefined,
   dataLayer,
   google_tag_manager: { "GTM-TEST": {} },
   setTimeout: globalThis.setTimeout.bind(globalThis),
@@ -44,6 +50,17 @@ const fakeWindow = {
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(message)
+}
+
+function dataLayerHasQrCustomEvent(): boolean {
+  return dataLayer.some((entry) => {
+    return Boolean(
+      entry &&
+        typeof entry === "object" &&
+        !("0" in (entry as object)) &&
+        (entry as { event?: unknown }).event === "qr_letak",
+    )
+  })
 }
 
 async function main() {
@@ -59,48 +76,39 @@ async function main() {
     waitForAnalytics,
   } = await import("../lib/track-qr-letak")
 
-  assert(!isGtagReady(), "GTM object alone must not count as ready")
+  assert(!isGtagReady(), "GTM object alone must not count as gtag-ready")
 
-  fakeWindow.gtag = gtagMock
-  assert(isGtagReady(), "window.gtag function must count as ready")
+  const readyViaStub = await waitForAnalytics(200)
+  assert(readyViaStub, "waitForAnalytics should install a gtag stub after GTM is up")
+  assert(isGtagReady(), "stub must define window.gtag")
 
   markQrLetakPending()
   assert(hasPendingQrLetak(), "pending flag should be set")
 
+  fakeWindow.gtag = gtagMock
   await new Promise<void>((resolve) => {
-    trackQrLetak({
-      onDone: () => resolve(),
-    })
+    trackQrLetak({ onDone: () => resolve() })
   })
 
   assert(
     gtagCalls.some((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK),
     "must call gtag('event', 'qr_letak')",
   )
-  assert(
-    !dataLayer.some((entry) => {
-      return Boolean(
-        entry && typeof entry === "object" && (entry as { event?: unknown }).event === GA_EVENT_QR_LETAK,
-      )
-    }),
-    "must not dataLayer.push({ event: 'qr_letak' })",
-  )
+  assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "successful gtag handoff marks sent")
   assert(!hasPendingQrLetak(), "pending must clear after gtag handoff")
 
   fakeWindow.gtag = undefined
-  gtagCalls.length = 0
+  fakeWindow.google_tag_manager = undefined
   dataLayer.length = 0
+  gtagCalls.length = 0
   markQrLetakPending()
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
   })
-  assert(gtagCalls.length === 0, "missing gtag must not invent a gtag call")
-  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "failed handoff keeps pending")
-
-  fakeWindow.gtag = gtagMock
-  const ready = await waitForAnalytics(200)
-  assert(ready, "waitForAnalytics should resolve once gtag exists")
+  assert(gtagCalls.length === 0, "must not call gtag when it is missing and GTM is not ready")
+  assert(!dataLayerHasQrCustomEvent(), "failed handoff must not push a Custom Event")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "failed gtag handoff keeps pending")
 
   console.log("ok")
 }

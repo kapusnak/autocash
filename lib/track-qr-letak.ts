@@ -12,12 +12,12 @@ export const QR_LETAK_PENDING = "pending"
 export const QR_LETAK_SENT = "sent"
 
 /**
- * Wait for `window.gtag` (GTM injects it; first visit / cookie banner can delay).
- * Do not treat the GTM container alone as ready — this path sends via gtag only.
+ * Wait for `window.gtag` or the GTM container (this property does not publish
+ * gtag itself). First visit / TCF cookie banner can delay the container.
  */
 export const QR_ANALYTICS_READY_TIMEOUT_MS = 4000
-/** Brief pause after gtag appears so GA4 config / consent defaults can apply. */
-export const QR_GTAG_SETTLE_MS = 300
+/** Pause after the collector is up so GA4 config / consent defaults can apply. */
+export const QR_GTAG_SETTLE_MS = 400
 /** Hold after `gtag('event')` so the hit can leave before `location.replace`. */
 export const QR_REDIRECT_HOLD_MS = 2500
 /** Homepage safety net can wait longer — the page stays loaded. */
@@ -40,13 +40,43 @@ function finishOnce(fn: (() => void) | undefined): () => void {
   }
 }
 
+function hasDataLayerEvent(name: string): boolean {
+  const dataLayer = window.dataLayer
+  if (!Array.isArray(dataLayer)) return false
+  return dataLayer.some((entry) => {
+    if (!entry || typeof entry !== "object") return false
+    return (entry as { event?: unknown }).event === name
+  })
+}
+
 export function isGtagReady(): boolean {
   return typeof window !== "undefined" && typeof window.gtag === "function"
 }
 
-/** @deprecated use isGtagReady — ready means `window.gtag`, not the GTM object. */
+export function isGtmReady(): boolean {
+  if (typeof window === "undefined") return false
+  if (window.google_tag_manager && typeof window.google_tag_manager === "object") return true
+  return hasDataLayerEvent("gtm.load")
+}
+
+/** Ready to call `gtag('event')` — a live function, not merely the GTM object. */
 export function isAnalyticsReady(): boolean {
   return isGtagReady()
+}
+
+/**
+ * Official gtag stub. This GTM container does not assign `window.gtag`; the
+ * GA4 Google tag still processes `dataLayer.push(arguments)` after load.
+ * Do not use this to send a Custom Event object.
+ */
+export function ensureGtag(): boolean {
+  if (typeof window === "undefined") return false
+  if (typeof window.gtag === "function") return true
+  window.dataLayer = window.dataLayer || []
+  window.gtag = function gtag() {
+    window.dataLayer!.push(arguments)
+  }
+  return typeof window.gtag === "function"
 }
 
 function delay(ms: number): Promise<void> {
@@ -55,9 +85,15 @@ function delay(ms: number): Promise<void> {
   })
 }
 
+function collectorIsUp(): boolean {
+  if (isGtagReady()) return true
+  if (HAS_GTM && isGtmReady()) return true
+  return false
+}
+
 /**
- * Resolves true when `window.gtag` is a function (then settles briefly).
- * False if analytics is unset or gtag never appears within `timeoutMs`.
+ * Resolves true when `gtag('event')` can be called.
+ * Waits for `window.gtag`, or for the GTM container and then installs the stub.
  */
 export async function waitForAnalytics(
   timeoutMs = QR_ANALYTICS_READY_TIMEOUT_MS,
@@ -66,13 +102,13 @@ export async function waitForAnalytics(
   if (!HAS_ANALYTICS) return false
 
   const appeared = await new Promise<boolean>((resolve) => {
-    if (isGtagReady()) {
+    if (collectorIsUp()) {
       resolve(true)
       return
     }
     const started = Date.now()
     const tick = () => {
-      if (isGtagReady()) {
+      if (collectorIsUp()) {
         resolve(true)
         return
       }
@@ -86,6 +122,8 @@ export async function waitForAnalytics(
   })
 
   if (!appeared) return false
+  if (!isGtagReady() && HAS_GTM && isGtmReady()) ensureGtag()
+  if (!isGtagReady()) return false
   if (QR_GTAG_SETTLE_MS > 0) await delay(QR_GTAG_SETTLE_MS)
   return isGtagReady()
 }
@@ -138,6 +176,7 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
   }
 
   const done = finishOnce(options?.onDone)
+  if (!isGtagReady() && HAS_GTM && isGtmReady()) ensureGtag()
   const gtag = window.gtag
 
   if (typeof gtag !== "function") {
