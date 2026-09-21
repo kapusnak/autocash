@@ -295,6 +295,10 @@ export function LoanCalculator() {
             </span>
             <span className="text-[11px] font-medium text-emerald-800">Specialisté online • Kapacita volná</span>
           </div>
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+            Nafocení vozu je jednoduché: po odeslání poptávky vám přijde e-mail s odkazem. Otevřete ho v mobilu,
+            vyfotíte auto podle návodu a odešlete — nic instalovat nemusíte.
+          </p>
         </div>
 
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

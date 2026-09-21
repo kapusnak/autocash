@@ -25,8 +25,9 @@ export default function HowItWorksPage() {
               Jak získáte peníze za auto
             </h1>
             <p className="text-primary-foreground/85 text-base md:text-lg leading-relaxed max-w-xl mx-auto">
-              Vyplníte poptávku, oceníme vůz, podepíšete s námi smlouvu a peníze vám přijdou na účet. Autem přitom
-              jezdíte dál — v technickém průkazu zůstáváte provozovatelem.
+              Vyplníte poptávku, oceníme vůz, podepíšete s námi smlouvu a peníze vám přijdou na účet. Po odeslání vám
+              přijde e-mail s odkazem — auto vyfotíte v mobilu, nic instalovat nemusíte. Autem přitom jezdíte dál — v
+              technickém průkazu zůstáváte provozovatelem.
             </p>
             <Link
               href="/#formular"
