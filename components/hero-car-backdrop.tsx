@@ -12,7 +12,7 @@ export function HeroCarBackdrop() {
           fill
           priority
           sizes="(max-width: 767px) 800px, 1280px"
-          className="hero-car-photo object-cover object-[50%_60%] sm:object-[52%_56%] lg:object-[58%_52%]"
+          className="hero-car-photo object-cover object-[68%_58%] sm:object-[70%_54%] lg:object-[72%_50%]"
         />
       </picture>
       <div
