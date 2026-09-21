@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Car, Clock, MapPin, Shield } from "lucide-react"
+import { ArrowDown, Car, Clock, MapPin, Shield } from "lucide-react"
 
 import { Header } from "@/components/header"
 import { HeroCarBackdrop } from "@/components/hero-car-backdrop"
@@ -30,12 +30,11 @@ export default function Home() {
 
         <div className="absolute inset-0 opacity-15 pointer-events-none overflow-hidden">
           <div className="absolute top-24 left-8 w-56 sm:w-80 h-56 sm:h-80 rounded-full bg-gold blur-3xl animate-pulse" />
-          <div className="absolute bottom-16 right-4 w-72 sm:w-[28rem] h-72 sm:h-[28rem] rounded-full bg-emerald-200/40 blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 pt-28 pb-8 lg:py-10 lg:pt-28 flex-1 flex flex-col relative z-10">
-          <div className="flex-1 flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12">
-            <div className="text-card space-y-4 text-center lg:text-left order-1 lg:flex-1 animate-fade-up lg:pt-20">
+          <div className="w-full max-w-xl mx-auto lg:mx-0 space-y-6 animate-fade-up">
+            <div className="text-card space-y-4 text-center lg:text-left">
               <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-[3.25rem] font-bold leading-[1.18] text-balance">
                 Získejte peníze za auto
                 <span className="block text-gold mt-1">a jezděte s ním dál.</span>
@@ -53,25 +52,18 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div className="pt-2 flex justify-center lg:justify-start">
+              <div className="pt-2 flex justify-center lg:hidden">
                 <a
                   href="#formular"
-                  className="inline-flex lg:hidden items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-y"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm sm:text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-y"
                 >
                   Vyplňte nezávaznou poptávku
                   <ArrowDown className="h-4 w-4 shrink-0" aria-hidden />
                 </a>
-                <div
-                  className="hidden lg:inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-base font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-x select-none"
-                  aria-hidden="true"
-                >
-                  Vyplňte nezávaznou poptávku
-                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                </div>
               </div>
             </div>
 
-            <div className="flex justify-center lg:justify-end order-2 lg:flex-1 animate-fade-up-delay">
+            <div className="flex justify-center lg:justify-start animate-fade-up-delay">
               <LoanCalculator />
             </div>
           </div>
