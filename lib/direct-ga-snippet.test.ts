@@ -31,5 +31,9 @@ test("GTM hybrid config suppresses page_view; GTM-absent config is default", () 
     directGaConfigSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ"),
     "gtag('config', 'G-DXBBY6TFGG', { send_page_view: false });",
   )
+  assert.equal(
+    directGaConfigSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ", "__autocashGtag"),
+    "__autocashGtag('config', 'G-DXBBY6TFGG', { send_page_view: false });",
+  )
   assert.equal(directGaConfigSnippet("G-DXBBY6TFGG", ""), "gtag('config', 'G-DXBBY6TFGG');")
 })

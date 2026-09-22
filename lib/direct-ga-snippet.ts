@@ -1,7 +1,8 @@
 /**
  * Direct `gtag/js` snippet for the GA4 measurement ID.
- * Always load when the id is set — including alongside GTM. GTM still owns
- * page_view; the inline config then uses `send_page_view: false`.
+ * Always load when the id is set — including alongside GTM. Hybrid then
+ * uses an isolated dataLayer (`l=autocashGaDl`) and `send_page_view: false`
+ * so GTM keeps page_view.
  */
 export function shouldLoadDirectGaSnippet(
   measurementId: string | undefined = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
@@ -20,10 +21,11 @@ export function shouldSuppressDirectGaPageView(
 export function directGaConfigSnippet(
   measurementId: string,
   gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID,
+  gtagFn = "gtag",
 ): string {
   const id = measurementId.trim()
   if (shouldSuppressDirectGaPageView(gtmId)) {
-    return `gtag('config', '${id}', { send_page_view: false });`
+    return `${gtagFn}('config', '${id}', { send_page_view: false });`
   }
-  return `gtag('config', '${id}');`
+  return `${gtagFn}('config', '${id}');`
 }
