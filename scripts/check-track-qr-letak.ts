@@ -1,6 +1,7 @@
 /**
- * Hybrid /qr handoff: load gtag.js with GTM, wait for executed gtag/js (not
- * the inline stub), send_to GA4, no Custom Event, mark sent only on callback.
+ * Hybrid /qr handoff: isolated gtag.js (`l=autocashGaDl`) beside GTM, wait
+ * for that collector (not GTM's default-layer gtag/js), send_to GA4, no
+ * Custom Event, mark sent only on callback. Fire order: set, config, event.
  * Run: npx tsx scripts/check-track-qr-letak.ts
  */
 process.env.NEXT_PUBLIC_GTM_ID = "GTM-TEST"
@@ -38,6 +39,7 @@ function gtagStubNoCallback(...args: unknown[]) {
 
 const fakeWindow: {
   gtag?: typeof gtagMock
+  __autocashGtag?: typeof gtagMock
   dataLayer: unknown[]
   google_tag_manager?: Record<string, unknown>
   __autocashGtagJsLoaded?: boolean
@@ -47,6 +49,7 @@ const fakeWindow: {
   performance: { getEntriesByType: (type: string) => PerformanceResourceTiming[] } | typeof performance
 } = {
   gtag: undefined,
+  __autocashGtag: undefined,
   dataLayer,
   google_tag_manager: undefined,
   __autocashGtagJsLoaded: undefined,
@@ -97,13 +100,15 @@ async function main() {
     "utf8",
   )
   assert(gaSrc.includes("shouldLoadDirectGaSnippet"), "GoogleAnalytics must still gate on measurement id")
-  assert(gaSrc.includes("googletagmanager.com/gtag/js?id="), "GoogleAnalytics must load gtag.js")
-  assert(gaSrc.includes("directGaConfigSnippet"), "GoogleAnalytics must use the shared config helper")
+  assert(gaSrc.includes("gaGtagJsSrc"), "GoogleAnalytics must build gtag.js URL via helper")
+  assert(gaSrc.includes("QR_GTAG_DATALAYER"), "hybrid must isolate measurement gtag.js from GTM dataLayer")
+  assert(gaSrc.includes("__autocashGtag"), "hybrid must call isolated __autocashGtag, not window.gtag")
+  assert(gaSrc.includes("__autocashGtmGtag"), "hybrid must save GTM window.gtag before isolated gtag.js")
+  assert(gaSrc.includes('id="google-analytics-gtagjs"'), "measurement gtag.js script must have a stable id")
   assert(gaSrc.includes("onLoad={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js load")
   assert(gaSrc.includes("onReady={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js ready")
-  assert(gaSrc.includes("typeof window.gtag !== 'function'"), "inline snippet must not overwrite a live gtag")
   assert(
-    gaSrc.indexOf('id="google-analytics"') < gaSrc.indexOf("googletagmanager.com/gtag/js?id="),
+    gaSrc.indexOf('id="google-analytics"') < gaSrc.indexOf("src={src}"),
     "stub snippet must be injected before gtag.js so a cached library is not overwritten",
   )
   assert(
@@ -126,11 +131,13 @@ async function main() {
   const {
     GA_EVENT_QR_LETAK,
     QR_ANALYTICS_READY_TIMEOUT_MS,
+    QR_GTAG_DATALAYER,
     QR_HOME_BEACON_WAIT_MS,
     QR_LETAK_PENDING,
     QR_LETAK_SENT,
     QR_LETAK_STORAGE_KEY,
     QR_REDIRECT_HOLD_MS,
+    gaGtagJsSrc,
     handoffQrLetakScan,
     hasPendingQrLetak,
     isAnalyticsReady,
@@ -148,31 +155,44 @@ async function main() {
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
 
   const gtmUrl = "https://www.googletagmanager.com/gtm.js?id=GTM-P6VZJXTQ"
-  const gtagUrl = "https://www.googletagmanager.com/gtag/js?id=G-DXBBY6TFGG"
-  assert(!isGtagJsScriptUrl(gtmUrl, "G-DXBBY6TFGG"), "gtm.js must not count as gtag.js")
-  assert(!isGtagJsScriptUrl("https://www.googletagmanager.com/gta", "G-DXBBY6TFGG"), "gta prefix must not count as gtag.js")
-  assert(isGtagJsScriptUrl(gtagUrl, "G-DXBBY6TFGG"), "gtag/js?id=G- must count as gtag.js")
+  const sharedGtagUrl = "https://www.googletagmanager.com/gtag/js?id=G-DXBBY6TFGG"
+  const isolatedUrl = gaGtagJsSrc("G-DXBBY6TFGG", QR_GTAG_DATALAYER)
+  assert(!isGtagJsScriptUrl(gtmUrl, "G-DXBBY6TFGG", QR_GTAG_DATALAYER), "gtm.js must not count as gtag.js")
+  assert(
+    !isGtagJsScriptUrl(sharedGtagUrl, "G-DXBBY6TFGG", QR_GTAG_DATALAYER),
+    "GTM default-layer gtag/js?id=G- must not count as the isolated collector",
+  )
+  assert(isGtagJsScriptUrl(isolatedUrl, "G-DXBBY6TFGG", QR_GTAG_DATALAYER), "isolated l=autocashGaDl gtag/js must count")
 
   fakeWindow.performance = {
     getEntriesByType: (type: string) =>
       type === "resource"
-        ? [{ name: gtmUrl, initiatorType: "script", responseEnd: 42 } as PerformanceResourceTiming]
+        ? [{ name: sharedGtagUrl, initiatorType: "script", responseEnd: 42 } as PerformanceResourceTiming]
         : [],
   }
   fakeWindow.__autocashGtagJsLoaded = undefined
   fakeWindow.gtag = gtagMock
-  assert(!isGtagJsLoaded(), "gtm.js performance entry must not flip gtag.js loaded")
+  fakeWindow.__autocashGtag = gtagMock
+  assert(!isGtagJsLoaded(), "shared-layer gtag/js must not flip gtag.js loaded beside GTM")
   fakeWindow.performance = {
     getEntriesByType: (type: string) =>
       type === "resource"
-        ? [{ name: gtagUrl, initiatorType: "script", responseEnd: 0 } as PerformanceResourceTiming]
+        ? [{ name: isolatedUrl, initiatorType: "script", responseEnd: 0 } as PerformanceResourceTiming]
         : [],
   }
-  assert(isGtagJsLoaded(), "gtag/js?id=G- performance script entry must count as loaded")
+  assert(!isGtagJsLoaded(), "in-flight isolated gtag/js (responseEnd 0) must not count as loaded")
+  fakeWindow.performance = {
+    getEntriesByType: (type: string) =>
+      type === "resource"
+        ? [{ name: isolatedUrl, initiatorType: "script", responseEnd: 42 } as PerformanceResourceTiming]
+        : [],
+  }
+  assert(isGtagJsLoaded(), "isolated gtag/js?id=G-&l=autocashGaDl must count as loaded")
   fakeWindow.performance = { getEntriesByType: () => [] }
   fakeWindow.__autocashGtagJsLoaded = undefined
 
   fakeWindow.gtag = gtagMock
+  fakeWindow.__autocashGtag = gtagMock
   fakeWindow.__autocashGtagJsLoaded = undefined
   assert(isGtagReady(), "inline stub should count as gtag-ready")
   assert(!isGtagJsLoaded(), "stub must not count as gtag.js loaded")
@@ -203,9 +223,11 @@ async function main() {
     trackQrLetak({ onDone: () => resolve() })
   })
 
+  const setIndex = gtagCalls.findIndex((call) => call[0] === "set")
   const configIndex = gtagCalls.findIndex((call) => call[0] === "config")
   const qrIndex = gtagCalls.findIndex((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK)
-  assert(configIndex >= 0, "must gtag('config', GA4 id) before the event")
+  assert(setIndex >= 0, "must gtag('set', { campaign }) like hnedpenize")
+  assert(configIndex > setIndex, "must gtag('config', GA4 id) after campaign set")
   assert(gtagCalls[configIndex][1] === "G-DXBBY6TFGG", "config must target the GA4 measurement id")
   assert(
     eventParams(gtagCalls[configIndex])?.send_page_view === false,
@@ -221,6 +243,7 @@ async function main() {
   assert(!hasPendingQrLetak(), "pending must clear after gtag handoff")
 
   fakeWindow.gtag = undefined
+  fakeWindow.__autocashGtag = undefined
   fakeWindow.google_tag_manager = { "GTM-TEST": {} }
   fakeWindow.__autocashGtagJsLoaded = undefined
   dataLayer.length = 0
@@ -253,6 +276,7 @@ async function main() {
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "homepage timeout keeps pending")
 
   fakeWindow.gtag = gtagStubNoCallback
+  fakeWindow.__autocashGtag = gtagStubNoCallback
   fakeWindow.__autocashGtagJsLoaded = true
   gtagCalls.length = 0
   markQrLetakPending()
@@ -278,6 +302,7 @@ async function main() {
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "timeout without callback keeps pending")
 
   fakeWindow.gtag = gtagMock
+  fakeWindow.__autocashGtag = gtagMock
   gtagCalls.length = 0
   await handoffQrLetakScan(undefined, 200)
   assert(

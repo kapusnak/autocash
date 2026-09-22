@@ -5,12 +5,14 @@ import { fileURLToPath } from "node:url"
 import {
   GA_EVENT_QR_LETAK,
   QR_ANALYTICS_READY_TIMEOUT_MS,
+  QR_GTAG_DATALAYER,
   QR_HOME_BEACON_WAIT_MS,
   QR_LETAK_CAMPAIGN,
   QR_LETAK_PENDING,
   QR_LETAK_SENT,
   QR_LETAK_STORAGE_KEY,
   QR_REDIRECT_HOLD_MS,
+  gaGtagJsSrc,
   handoffQrLetakScan,
   hasPendingQrLetak,
   isAnalyticsReady,
@@ -62,6 +64,7 @@ function installWindow(
     configurable: true,
     value: {
       gtag,
+      __autocashGtag: gtag,
       dataLayer: extras?.dataLayer ? [...extras.dataLayer] : [],
       google_tag_manager: extras?.googleTagManager,
       __autocashGtagJsLoaded: extras?.gtagJsLoaded ? true : undefined,
@@ -145,11 +148,19 @@ test("trackQrLetak configs GA4 once then events with send_to", async () => {
     trackQrLetak({ onDone: () => resolve() })
   })
 
-  assert.equal(calls[0]?.[0], "config")
-  assert.equal(calls[0]?.[1], GA_ID)
-  assert.deepEqual(calls[0]?.[2], { send_page_view: false })
-  assert.equal(calls[1]?.[0], "event")
-  assert.equal(calls[1]?.[1], GA_EVENT_QR_LETAK)
+  assert.equal(calls[0]?.[0], "set")
+  assert.deepEqual(calls[0]?.[1], {
+    campaign: {
+      source: QR_LETAK_CAMPAIGN.campaign_source,
+      medium: QR_LETAK_CAMPAIGN.campaign_medium,
+      name: QR_LETAK_CAMPAIGN.campaign_name,
+    },
+  })
+  assert.equal(calls[1]?.[0], "config")
+  assert.equal(calls[1]?.[1], GA_ID)
+  assert.deepEqual(calls[1]?.[2], { send_page_view: false })
+  assert.equal(calls[2]?.[0], "event")
+  assert.equal(calls[2]?.[1], GA_EVENT_QR_LETAK)
 
   const params = eventParams(calls)
   assert.equal(params.send_to, GA_ID)
@@ -171,8 +182,10 @@ test("trackQrLetak configs GA4 once then events with send_to", async () => {
   })
   const configs = calls.filter((call) => call[0] === "config")
   const events = calls.filter((call) => call[0] === "event")
+  const sets = calls.filter((call) => call[0] === "set")
   assert.equal(configs.length, 1)
   assert.equal(events.length, 2)
+  assert.equal(sets.length, 2)
   assert.equal((events[1]?.[2] as Record<string, unknown>).send_to, GA_ID)
 })
 
@@ -233,9 +246,10 @@ test("gtag.js loaded plus gtag function is ready without GTM", async () => {
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
   })
-  assert.equal(calls[0]?.[0], "config")
-  assert.equal(calls[1]?.[0], "event")
-  assert.equal(calls[1]?.[1], GA_EVENT_QR_LETAK)
+  assert.equal(calls[0]?.[0], "set")
+  assert.equal(calls[1]?.[0], "config")
+  assert.equal(calls[2]?.[0], "event")
+  assert.equal(calls[2]?.[1], GA_EVENT_QR_LETAK)
   assert.equal(eventParams(calls).send_to, GA_ID)
 })
 
@@ -295,9 +309,11 @@ test("handoffQrLetakScan fires config then qr_letak once gtag.js is loaded", asy
 
   await handoffQrLetakScan(undefined, 200)
 
+  const setIndex = calls.findIndex((call) => call[0] === "set")
   const configIndex = calls.findIndex((call) => call[0] === "config")
   const qrIndex = calls.findIndex((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK)
-  assert.ok(configIndex >= 0)
+  assert.ok(setIndex >= 0)
+  assert.ok(configIndex > setIndex)
   assert.ok(qrIndex > configIndex)
   assert.equal(calls[configIndex]?.[1], GA_ID)
   assert.deepEqual(calls[configIndex]?.[2], { send_page_view: false })
@@ -345,40 +361,89 @@ test("markGtagJsLoaded flips collector ready", () => {
   assert.equal(isAnalyticsReady(), true)
 })
 
-test("gtm.js must not count as gtag.js loaded; gtag/js?id=G- must", () => {
+test("GTM's default-layer gtag/js is not the collector; isolated l=autocashGaDl is", () => {
   const gtmUrl = "https://www.googletagmanager.com/gtm.js?id=GTM-P6VZJXTQ"
-  const gtagUrl = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+  const sharedGtagUrl = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+  const isolatedUrl = gaGtagJsSrc(GA_ID, QR_GTAG_DATALAYER)
   const adsUrl = "https://www.googletagmanager.com/gtag/js?id=AW-17721640948"
   const prefixOnly = "https://www.googletagmanager.com/gta"
 
-  assert.equal(isGtagJsScriptUrl(gtmUrl, GA_ID), false)
-  assert.equal(isGtagJsScriptUrl(gtmUrl), false)
-  assert.equal(isGtagJsScriptUrl(prefixOnly, GA_ID), false)
-  assert.equal(isGtagJsScriptUrl(adsUrl, GA_ID), false)
-  assert.equal(isGtagJsScriptUrl(gtagUrl, GA_ID), true)
-  assert.equal(gtmUrl.includes("/gtag/js"), false)
+  assert.equal(isGtagJsScriptUrl(gtmUrl, GA_ID, QR_GTAG_DATALAYER), false)
+  assert.equal(isGtagJsScriptUrl(sharedGtagUrl, GA_ID, QR_GTAG_DATALAYER), false)
+  assert.equal(isGtagJsScriptUrl(prefixOnly, GA_ID, QR_GTAG_DATALAYER), false)
+  assert.equal(isGtagJsScriptUrl(adsUrl, GA_ID, QR_GTAG_DATALAYER), false)
+  assert.equal(isGtagJsScriptUrl(isolatedUrl, GA_ID, QR_GTAG_DATALAYER), true)
+  assert.equal(isGtagJsScriptUrl(sharedGtagUrl, GA_ID), true)
+  assert.ok(isolatedUrl.includes("/gtag/js"))
+  assert.ok(isolatedUrl.includes(GA_ID))
+  assert.ok(isolatedUrl.includes(`l=${QR_GTAG_DATALAYER}`))
 
   installWindow(() => {}, {
     resourceEntries: [{ name: gtmUrl, initiatorType: "script", responseEnd: 42 }],
   })
   assert.equal(isGtagJsLoaded(), false)
+
+  installWindow(() => {}, {
+    resourceEntries: [{ name: sharedGtagUrl, initiatorType: "script", responseEnd: 42 }],
+  })
+  assert.equal(isGtagJsLoaded(), false)
   assert.equal(isAnalyticsReady(), false)
 
   installWindow(() => {}, {
-    resourceEntries: [{ name: gtagUrl, initiatorType: "link", responseEnd: 42 }],
+    resourceEntries: [{ name: isolatedUrl, initiatorType: "link", responseEnd: 42 }],
   })
   assert.equal(isGtagJsLoaded(), false)
 
   installWindow(() => {}, {
-    resourceEntries: [{ name: adsUrl, initiatorType: "script", responseEnd: 42 }],
+    resourceEntries: [{ name: isolatedUrl, initiatorType: "script", responseEnd: 0 }],
   })
   assert.equal(isGtagJsLoaded(), false)
 
   installWindow(() => {}, {
-    resourceEntries: [{ name: gtagUrl, initiatorType: "script", responseEnd: 0 }],
+    resourceEntries: [{ name: isolatedUrl, initiatorType: "script", responseEnd: 42 }],
   })
   assert.equal(isGtagJsLoaded(), true)
   assert.equal(isAnalyticsReady(), true)
+})
+
+test("hybrid qr_letak uses isolated __autocashGtag, not the shared window.gtag stub", async () => {
+  const sharedCalls: GtagCall[] = []
+  const isolatedCalls: GtagCall[] = []
+  installWindow((...args) => {
+    sharedCalls.push(args)
+  }, { gtagJsLoaded: true })
+
+  const win = globalThis as {
+    window: {
+      gtag?: (...args: GtagCall) => void
+      __autocashGtag?: (...args: GtagCall) => void
+    }
+  }
+  win.window.__autocashGtag = (...args) => {
+    isolatedCalls.push(args)
+    const params = args[2]
+    if (params && typeof params === "object" && "event_callback" in params) {
+      const cb = (params as { event_callback?: unknown }).event_callback
+      if (typeof cb === "function") cb()
+    }
+  }
+
+  await new Promise<void>((resolve) => {
+    trackQrLetak({ onDone: () => resolve() })
+  })
+
+  assert.equal(sharedCalls.length, 0)
+  assert.equal(isolatedCalls[0]?.[0], "set")
+  assert.equal(isolatedCalls[1]?.[0], "config")
+  assert.equal(isolatedCalls[2]?.[0], "event")
+  assert.equal(isolatedCalls[2]?.[1], GA_EVENT_QR_LETAK)
+  assert.equal(eventParams(isolatedCalls).send_to, GA_ID)
+  assert.equal(
+    dataLayerHasQrCustomEvent(
+      (globalThis as { window: { dataLayer: unknown[] } }).window.dataLayer,
+    ),
+    false,
+  )
 })
 
 test("replayPendingQrLetak attempts track even if the wait timed out", async () => {
@@ -395,17 +460,21 @@ test("replayPendingQrLetak attempts track even if the wait timed out", async () 
   const win = globalThis as {
     window: {
       gtag?: (...args: GtagCall) => void
+      __autocashGtag?: (...args: GtagCall) => void
       __autocashGtagJsLoaded?: boolean
     }
   }
   win.window.__autocashGtagJsLoaded = true
-  win.window.gtag = (...args) => {
+  win.window.__autocashGtag = (...args) => {
     calls.push(args)
     const params = args[2]
     if (params && typeof params === "object" && "event_callback" in params) {
       const cb = (params as { event_callback?: unknown }).event_callback
       if (typeof cb === "function") cb()
     }
+  }
+  win.window.gtag = (...args) => {
+    calls.push(["shared", ...args])
   }
   markQrLetakPending()
   replayPendingQrLetak(80)
@@ -435,19 +504,103 @@ test("GTM-only deploys still require the container before a gtag stub is enough"
   assert.equal(calls.length, 0)
 })
 
-test("GoogleAnalytics component loads gtag.js with GTM, suppresses page_view, and marks load", () => {
+test("isolated gtag.js overwriting window.gtag is adopted; GTM gtag is restored", async () => {
+  const sharedCalls: GtagCall[] = []
+  const isolatedCalls: GtagCall[] = []
+  const gtmStub = (...args: GtagCall) => {
+    sharedCalls.push(args)
+  }
+  const isolatedCollector = (...args: GtagCall) => {
+    isolatedCalls.push(args)
+    const params = args[2]
+    if (params && typeof params === "object" && "event_callback" in params) {
+      const cb = (params as { event_callback?: unknown }).event_callback
+      if (typeof cb === "function") cb()
+    }
+  }
+
+  installWindow(gtmStub)
+  const win = globalThis as {
+    window: {
+      gtag?: (...args: GtagCall) => void
+      __autocashGtag?: (...args: GtagCall) => void
+      __autocashGtmGtag?: (...args: GtagCall) => void
+    }
+  }
+  win.window.__autocashGtmGtag = gtmStub
+  win.window.gtag = isolatedCollector
+  markGtagJsLoaded()
+
+  assert.equal(win.window.__autocashGtag, isolatedCollector)
+  assert.equal(win.window.gtag, gtmStub)
+
+  await new Promise<void>((resolve) => {
+    trackQrLetak({ onDone: () => resolve() })
+  })
+  assert.equal(sharedCalls.length, 0)
+  assert.equal(isolatedCalls[0]?.[0], "set")
+  assert.equal(isolatedCalls[1]?.[0], "config")
+  assert.equal(isolatedCalls[2]?.[1], GA_EVENT_QR_LETAK)
+})
+
+test("GA-only (no GTM) uses window.gtag on the default dataLayer", async () => {
+  delete process.env[GTM_ENV]
+  const sharedCalls: GtagCall[] = []
+  const isolatedCalls: GtagCall[] = []
+  installWindow(
+    (...args) => {
+      sharedCalls.push(args)
+      const params = args[2]
+      if (params && typeof params === "object" && "event_callback" in params) {
+        const cb = (params as { event_callback?: unknown }).event_callback
+        if (typeof cb === "function") cb()
+      }
+    },
+    { gtagJsLoaded: true },
+  )
+  const win = globalThis as {
+    window: { __autocashGtag?: (...args: GtagCall) => void }
+  }
+  win.window.__autocashGtag = (...args) => {
+    isolatedCalls.push(args)
+  }
+
+  await new Promise<void>((resolve) => {
+    trackQrLetak({ onDone: () => resolve() })
+  })
+
+  assert.equal(isolatedCalls.length, 0)
+  assert.equal(sharedCalls[0]?.[0], "set")
+  assert.equal(sharedCalls[1]?.[0], "config")
+  assert.equal(sharedCalls[2]?.[1], GA_EVENT_QR_LETAK)
+  assert.equal(eventParams(sharedCalls).send_to, GA_ID)
+})
+
+test("GA-only treats default-layer gtag/js as the collector", () => {
+  delete process.env[GTM_ENV]
+  const sharedGtagUrl = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+  installWindow(() => {}, {
+    resourceEntries: [{ name: sharedGtagUrl, initiatorType: "script", responseEnd: 42 }],
+  })
+  assert.equal(isGtagJsLoaded(), true)
+  assert.equal(isAnalyticsReady(), true)
+})
+
+test("GoogleAnalytics component loads isolated gtag.js with GTM, suppresses page_view, and marks load", () => {
   const gaSrc = readFileSync(
     fileURLToPath(new URL("../components/google-analytics.tsx", import.meta.url)),
     "utf8",
   )
   assert.match(gaSrc, /shouldLoadDirectGaSnippet/)
-  assert.match(gaSrc, /googletagmanager\.com\/gtag\/js\?id=/)
-  assert.match(gaSrc, /directGaConfigSnippet/)
+  assert.match(gaSrc, /gaGtagJsSrc/)
+  assert.match(gaSrc, /QR_GTAG_DATALAYER/)
+  assert.match(gaSrc, /__autocashGtag/)
+  assert.match(gaSrc, /__autocashGtmGtag/)
+  assert.match(gaSrc, /id="google-analytics-gtagjs"/)
   assert.match(gaSrc, /onLoad=\{markGtagJsLoaded\}/)
   assert.match(gaSrc, /onReady=\{markGtagJsLoaded\}/)
-  assert.match(gaSrc, /typeof window\.gtag !== 'function'/)
   const stubIndex = gaSrc.indexOf('id="google-analytics"')
-  const srcIndex = gaSrc.indexOf("googletagmanager.com/gtag/js?id=")
+  const srcIndex = gaSrc.indexOf("src={src}")
   assert.ok(stubIndex >= 0 && srcIndex > stubIndex)
   assert.equal(shouldLoadDirectGaSnippet(GA_ID, "GTM-P6VZJXTQ"), true)
   assert.match(

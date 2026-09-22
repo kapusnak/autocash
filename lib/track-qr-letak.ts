@@ -12,6 +12,24 @@ export const QR_LETAK_PENDING = "pending"
 export const QR_LETAK_SENT = "sent"
 
 /**
+ * Isolated dataLayer for measurement `gtag/js` when GTM already owns
+ * `window.dataLayer`. Sibling hnedpenize gets a real collector from Ads
+ * `gtag/js?id=AW-…` (hardcoded fallback) and never loads a second
+ * `gtag/js?id=G-…` beside GTM. Autocash has no Ads tag. Loading the same
+ * `G-` id on GTM's layer leaves `gtag('event', …, { send_to })` as
+ * Arguments on `dataLayer` — GTM enhanced-measurement still emits
+ * `page_view` / `scroll`, the paused `GA4 - qr_letak` tag does not.
+ */
+export const QR_GTAG_DATALAYER = "autocashGaDl"
+
+/** `https://www.googletagmanager.com/gtag/js?id=G-…` plus optional `l=`. */
+export function gaGtagJsSrc(measurementId: string, dataLayerName?: string): string {
+  const params = new URLSearchParams({ id: measurementId.trim() })
+  if (dataLayerName) params.set("l", dataLayerName)
+  return `https://www.googletagmanager.com/gtag/js?${params.toString()}`
+}
+
+/**
  * Wait for a real collector (`gtag/js` executed), not the inline dataLayer stub.
  * First visit / TCF cookie banner can delay the script — match the homepage
  * beacon so /qr does not redirect before collect can leave.
@@ -40,6 +58,10 @@ function hasAnalytics(): boolean {
   return hasGa() || hasGtm()
 }
 
+function isHybridGaGtm(): boolean {
+  return hasGa() && hasGtm()
+}
+
 type TrackQrLetakOptions = {
   onDone?: () => void
 }
@@ -62,8 +84,20 @@ function hasDataLayerEvent(name: string): boolean {
   })
 }
 
+/**
+ * Hybrid (GTM + GA): the isolated collector, never the shared `window.gtag`
+ * stub GTM already wrapped. GA-only / GTM-only: `window.gtag`.
+ */
+export function qrCollector(): ((...args: unknown[]) => void) | undefined {
+  if (typeof window === "undefined") return undefined
+  if (isHybridGaGtm()) {
+    return typeof window.__autocashGtag === "function" ? window.__autocashGtag : undefined
+  }
+  return typeof window.gtag === "function" ? window.gtag : undefined
+}
+
 export function isGtagReady(): boolean {
-  return typeof window !== "undefined" && typeof window.gtag === "function"
+  return typeof qrCollector() === "function"
 }
 
 export function isGtmReady(): boolean {
@@ -72,37 +106,71 @@ export function isGtmReady(): boolean {
   return hasDataLayerEvent("gtm.load")
 }
 
+/**
+ * Isolated `gtag/js?l=autocashGaDl` assigns `window.gtag` to its collector.
+ * Keep that on `__autocashGtag` and give GTM / lead-conversion back the
+ * shared `window.gtag` if we captured it before the library ran.
+ */
+function adoptIsolatedGtagCollector(): void {
+  if (!isHybridGaGtm()) return
+  const current = window.gtag
+  const saved = window.__autocashGtmGtag
+  if (typeof current !== "function") return
+  if (saved && current === saved) return
+  window.__autocashGtag = current
+  if (typeof saved === "function") {
+    window.gtag = saved
+  }
+}
+
 /** Next.js Script `onLoad` / `onReady` — the library ran, not just the stub. */
 export function markGtagJsLoaded(): void {
   if (typeof window === "undefined") return
   window.__autocashGtagJsLoaded = true
+  adoptIsolatedGtagCollector()
 }
 
 /**
- * True only for the GA measurement `gtag/js` library URL.
- * Require `/gtag/js` — a shorter `…/gta` / `…/gt` prefix also matches GTM
- * `gtm.js` (`googletagmanager.com/gtm.js`) and must not count as loaded.
+ * True only for this page's measurement `gtag/js` library URL.
+ * Require `/gtag/js` (not `gtm.js`). When GTM+GA, also require
+ * `l=autocashGaDl` — GTM's default-layer `gtag/js?id=G-…` is not the
+ * collector (live after #18 already waited on `/gtag/js` and still
+ * produced no `en=qr_letak`).
  */
 export function isGtagJsScriptUrl(
   url: string | undefined | null,
   measurementId?: string,
+  dataLayerName?: string,
 ): boolean {
   if (!url) return false
   if (!url.includes("/gtag/js")) return false
   if (url.includes("/gtm.js")) return false
   const id = measurementId?.trim()
   if (id && !url.includes(id)) return false
+  const layer = dataLayerName?.trim()
+  if (layer) {
+    const decoded = url.replace(/&amp;/g, "&")
+    if (!decoded.includes(`l=${layer}`) && !decoded.includes(`l%3D${layer}`)) {
+      return false
+    }
+  }
   return true
+}
+
+function requiredGtagDataLayer(): string | undefined {
+  return isHybridGaGtm() ? QR_GTAG_DATALAYER : undefined
 }
 
 function hasMeasurementGtagJsResource(): boolean {
   try {
     const id = gaMeasurementId()
+    const layer = requiredGtagDataLayer()
     const entries = window.performance?.getEntriesByType?.("resource") ?? []
     return entries.some((entry) => {
       const resource = entry as PerformanceResourceTiming
       if (resource.initiatorType !== "script") return false
-      return isGtagJsScriptUrl(resource.name, id)
+      if (!(resource.responseEnd > 0)) return false
+      return isGtagJsScriptUrl(resource.name, id, layer)
     })
   } catch {
     return false
@@ -124,9 +192,9 @@ export function isGtagJsLoaded(): boolean {
 
 /**
  * Ready to send `qr_letak` via `gtag('event', …, { send_to })`.
- * When the GA measurement ID is set: require a live `window.gtag` **and**
- * executed `gtag/js` (inline stub + GTM enhanced-measurement is not enough).
- * GTM-only deploys still wait for the container (Ads / partial gtag is not enough).
+ * Hybrid: isolated `__autocashGtag` **and** executed `gtag/js?l=autocashGaDl`.
+ * Shared `window.gtag` + GTM `page_view`/`scroll` is not enough (live #18).
+ * GTM-only deploys still wait for the container.
  */
 export function isAnalyticsReady(): boolean {
   if (!isGtagReady()) return false
@@ -181,11 +249,12 @@ function waitUntil(predicate: () => boolean, timeoutMs: number): Promise<boolean
 function watchGtagJsScriptLoad(): void {
   if (typeof document === "undefined") return
   const id = gaMeasurementId()
+  const layer = requiredGtagDataLayer()
   const scripts = document.getElementsByTagName("script")
   for (let i = 0; i < scripts.length; i++) {
     const el = scripts[i]
     const src = el.src || ""
-    if (!isGtagJsScriptUrl(src, id)) continue
+    if (!isGtagJsScriptUrl(src, id, layer)) continue
     if (el.dataset.autocashGtagWatch === "1") continue
     el.dataset.autocashGtagWatch = "1"
     el.addEventListener("load", markGtagJsLoaded)
@@ -194,9 +263,9 @@ function watchGtagJsScriptLoad(): void {
 
 /**
  * Resolves true when `gtag('event')` can reach GA4 collect.
- * With a measurement ID: wait for `window.gtag` **and** executed `gtag/js`
- * (preload / inline stub is not enough). Do not treat GTM-only as sufficient
- * for send_to — Autocash GTM does not assign a collecting `gtag`.
+ * Hybrid: wait for `__autocashGtag` **and** executed `gtag/js?l=autocashGaDl`.
+ * Do not treat GTM `page_view`/`scroll` or default-layer `gtag/js?id=G-` as
+ * sufficient — Autocash GTM does not assign a collecting page-level `gtag`.
  * GTM-only: wait for `google_tag_manager` / `gtm.load`, then install a stub.
  * Settle is best-effort — a slow pause must not flip the result to false.
  */
@@ -276,13 +345,22 @@ function ensureGa4Configured(gtag: (...args: unknown[]) => void): string | undef
   return sendTo
 }
 
+function gtagCampaign(): { source: string; medium: string; name: string } {
+  return {
+    source: QR_LETAK_CAMPAIGN.campaign_source,
+    medium: QR_LETAK_CAMPAIGN.campaign_medium,
+    name: QR_LETAK_CAMPAIGN.campaign_name,
+  }
+}
+
 /**
  * Fires exactly one `qr_letak` via `gtag('event', …)` — never a GTM
  * `dataLayer.push({ event: 'qr_letak' })` Custom Event.
  *
- * When `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set, registers that destination
- * once with `gtag('config', id, { send_page_view: false })` then fires
- * the event with `send_to`. GTM still owns page_view.
+ * Fire order matches working hnedpenize: `gtag('set', { campaign })`,
+ * then once `gtag('config', id, { send_page_view: false })`, then
+ * `gtag('event', 'qr_letak', { send_to })`. Hybrid uses the isolated
+ * collector, not `window.gtag`. GTM still owns page_view.
  *
  * Marks the session flag sent **only** from `event_callback` (the hit left).
  * The redirect hold still calls `onDone` so `/qr` is not stuck, but pending
@@ -302,7 +380,7 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     return
   }
 
-  const gtag = window.gtag
+  const gtag = qrCollector()
   if (typeof gtag !== "function") {
     done()
     return
@@ -314,6 +392,7 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     done()
   })
 
+  gtag("set", { campaign: gtagCampaign() })
   const sendTo = ensureGa4Configured(gtag)
   const timer = window.setTimeout(done, holdMs)
 
