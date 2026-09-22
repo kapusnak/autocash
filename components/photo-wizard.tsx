@@ -1,12 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Camera, Check, ImagePlus, Loader2, MessageCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { compressImage } from "@/lib/compress-image"
-import { PHOTO_SLOT_HINTS, PHOTO_SLOT_LABELS, PHOTO_SLOTS, type PhotoSlot } from "@/lib/photo-slots"
+import { PHOTO_SLOT_HINTS, PHOTO_SLOT_LABELS, PHOTO_SLOT_TITLES, PHOTO_SLOTS, type PhotoSlot } from "@/lib/photo-slots"
 import { SITE } from "@/lib/site"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -114,12 +114,11 @@ function SlotSilhouette({ slot }: { slot: PhotoSlot }) {
 export function PhotoWizard({
   token,
   code,
-  name,
   variant = "lead",
 }: {
   token: string
   code: string
-  name: string
+  name?: string
   variant?: WizardVariant
 }) {
   const isShare = variant === "share"
@@ -196,11 +195,6 @@ export function PhotoWizard({
   const preview = drafts[slot]?.dataUrl
   const filledCount = PHOTO_SLOTS.filter((s) => drafts[s]?.dataUrl).length
   const allFilled = filledCount === PHOTO_SLOTS.length
-
-  const greeting = useMemo(() => {
-    const first = name.trim().split(/\s+/)[0]
-    return first ? `${first}, ` : ""
-  }, [name])
 
   async function submitAll(source: DraftMap, contactFields: ContactDraft) {
     const form = new FormData()
@@ -431,9 +425,7 @@ export function PhotoWizard({
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Krok {stepIndex + 1} / {PHOTO_SLOTS.length}
           </p>
-          <h1 className="font-display text-2xl font-bold mt-1">
-            {greeting}přidejte fotku {PHOTO_SLOT_LABELS[slot].toLowerCase()}
-          </h1>
+          <h1 className="font-display text-2xl font-bold mt-1">{PHOTO_SLOT_TITLES[slot]}</h1>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{PHOTO_SLOT_HINTS[slot]}</p>
         </div>
 

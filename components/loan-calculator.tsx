@@ -19,7 +19,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { PhoneDigitsInput } from "@/components/phone-digits-input"
 import { cn } from "@/lib/utils"
-import { Check, Loader2, Lock } from "lucide-react"
+import { Calendar, Car, Check, Gauge, Hash, Loader2, Lock, Mail, Phone, User } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 const LOCK_THRESHOLD_PX = 10
 
@@ -192,11 +193,22 @@ function emptyFields(): CalculatorFormValues {
 }
 
 const phoneInputWrapperClass =
-  "flex h-11 w-full items-center rounded-md border border-border bg-secondary px-3 text-sm shadow-sm outline-none transition-[color,box-shadow] focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:border-ring"
+  "flex h-11 w-full items-center rounded-md border border-border bg-secondary pl-10 pr-3 text-sm shadow-sm outline-none transition-[color,box-shadow] focus-within:ring-[3px] focus-within:ring-ring/50 focus-within:border-ring"
 
 const requiredStar = <span className="text-red-600">*</span>
 
-export function LoanCalculator() {
+const iconInputClass = "bg-secondary border-border h-11 text-sm pl-10"
+
+function FieldIcon({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <Icon
+      className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+      aria-hidden
+    />
+  )
+}
+
+export function LoanCalculator({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
@@ -284,7 +296,13 @@ export function LoanCalculator() {
   }
 
   return (
-    <Card id="formular" className="w-full max-w-[calc(100vw-2rem)] sm:max-w-md shadow-2xl border-0 bg-card scroll-mt-28">
+    <Card
+      id="formular"
+      className={cn(
+        "w-full max-w-[calc(100vw-2rem)] sm:max-w-md shadow-2xl border-0 bg-card scroll-mt-28",
+        embedded && "max-w-none sm:max-w-none shadow-none bg-transparent py-0 gap-0",
+      )}
+    >
       <CardContent className="px-4 sm:px-5 py-4 sm:py-5">
         <div className="mb-4">
           <h3 className="font-display text-lg font-semibold text-card-foreground">Nezávazná poptávka</h3>
@@ -306,13 +324,16 @@ export function LoanCalculator() {
             <Label htmlFor="vehicle-model" className="text-sm font-medium text-muted-foreground">
               Značka a model vozu {requiredStar}
             </Label>
-            <Input
-              id="vehicle-model"
-              className="bg-secondary border-border h-11 text-sm"
-              aria-invalid={Boolean(form.formState.errors.vehicleModel)}
-              aria-describedby={form.formState.errors.vehicleModel ? "vehicle-model-error" : undefined}
-              {...form.register("vehicleModel")}
-            />
+            <div className="relative">
+              <FieldIcon icon={Car} />
+              <Input
+                id="vehicle-model"
+                className={iconInputClass}
+                aria-invalid={Boolean(form.formState.errors.vehicleModel)}
+                aria-describedby={form.formState.errors.vehicleModel ? "vehicle-model-error" : undefined}
+                {...form.register("vehicleModel")}
+              />
+            </div>
             <p className="text-xs text-muted-foreground">Např. Škoda Fabia</p>
             {form.formState.errors.vehicleModel && (
               <p id="vehicle-model-error" className="mt-1 text-sm text-red-600">
@@ -326,13 +347,16 @@ export function LoanCalculator() {
               <Label htmlFor="vehicle-year" className="text-sm font-medium text-muted-foreground">
                 Rok výroby {requiredStar}
               </Label>
-              <Input
-                id="vehicle-year"
-                inputMode="numeric"
-                className="bg-secondary border-border h-11 text-sm"
-                aria-invalid={Boolean(form.formState.errors.year)}
-                {...form.register("year")}
-              />
+              <div className="relative">
+                <FieldIcon icon={Calendar} />
+                <Input
+                  id="vehicle-year"
+                  inputMode="numeric"
+                  className={iconInputClass}
+                  aria-invalid={Boolean(form.formState.errors.year)}
+                  {...form.register("year")}
+                />
+              </div>
               {form.formState.errors.year && (
                 <p className="mt-1 text-sm text-red-600">{form.formState.errors.year.message}</p>
               )}
@@ -341,13 +365,16 @@ export function LoanCalculator() {
               <Label htmlFor="vehicle-km" className="text-sm font-medium text-muted-foreground">
                 Najeté km {requiredStar}
               </Label>
-              <Input
-                id="vehicle-km"
-                inputMode="numeric"
-                className="bg-secondary border-border h-11 text-sm"
-                aria-invalid={Boolean(form.formState.errors.mileage)}
-                {...form.register("mileage")}
-              />
+              <div className="relative">
+                <FieldIcon icon={Gauge} />
+                <Input
+                  id="vehicle-km"
+                  inputMode="numeric"
+                  className={iconInputClass}
+                  aria-invalid={Boolean(form.formState.errors.mileage)}
+                  {...form.register("mileage")}
+                />
+              </div>
               {form.formState.errors.mileage && (
                 <p className="mt-1 text-sm text-red-600">{form.formState.errors.mileage.message}</p>
               )}
@@ -358,7 +385,10 @@ export function LoanCalculator() {
             <Label htmlFor="vehicle-vin" className="text-sm font-medium text-muted-foreground">
               VIN (nepovinné)
             </Label>
-            <Input id="vehicle-vin" className="bg-secondary border-border h-11 text-sm" {...form.register("vin")} />
+            <div className="relative">
+              <FieldIcon icon={Hash} />
+              <Input id="vehicle-vin" className={iconInputClass} {...form.register("vin")} />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -397,12 +427,15 @@ export function LoanCalculator() {
               <Label htmlFor="first-name" className="text-sm font-medium text-muted-foreground">
                 Jméno {requiredStar}
               </Label>
-              <Input
-                id="first-name"
-                autoComplete="given-name"
-                className="bg-secondary border-border h-11 text-sm"
-                {...form.register("firstName")}
-              />
+              <div className="relative">
+                <FieldIcon icon={User} />
+                <Input
+                  id="first-name"
+                  autoComplete="given-name"
+                  className={iconInputClass}
+                  {...form.register("firstName")}
+                />
+              </div>
               {form.formState.errors.firstName && (
                 <p className="mt-1 text-sm text-red-600">{form.formState.errors.firstName.message}</p>
               )}
@@ -411,12 +444,15 @@ export function LoanCalculator() {
               <Label htmlFor="last-name" className="text-sm font-medium text-muted-foreground">
                 Příjmení {requiredStar}
               </Label>
-              <Input
-                id="last-name"
-                autoComplete="family-name"
-                className="bg-secondary border-border h-11 text-sm"
-                {...form.register("lastName")}
-              />
+              <div className="relative">
+                <FieldIcon icon={User} />
+                <Input
+                  id="last-name"
+                  autoComplete="family-name"
+                  className={iconInputClass}
+                  {...form.register("lastName")}
+                />
+              </div>
               {form.formState.errors.lastName && (
                 <p className="mt-1 text-sm text-red-600">{form.formState.errors.lastName.message}</p>
               )}
@@ -427,14 +463,17 @@ export function LoanCalculator() {
             <Label htmlFor="phone-voz" className="text-sm font-medium text-muted-foreground">
               Telefonní číslo {requiredStar}
             </Label>
-            <PhoneDigitsInput
-              id="phone-voz"
-              className={phoneInputWrapperClass}
-              inputClassName="placeholder:text-muted-foreground"
-              value={form.watch("phoneDigits")}
-              onChange={(v) => form.setValue("phoneDigits", v)}
-              aria-invalid={Boolean(form.formState.errors.phoneDigits)}
-            />
+            <div className="relative">
+              <FieldIcon icon={Phone} />
+              <PhoneDigitsInput
+                id="phone-voz"
+                className={phoneInputWrapperClass}
+                inputClassName="placeholder:text-muted-foreground"
+                value={form.watch("phoneDigits")}
+                onChange={(v) => form.setValue("phoneDigits", v)}
+                aria-invalid={Boolean(form.formState.errors.phoneDigits)}
+              />
+            </div>
             {form.formState.errors.phoneDigits && (
               <p className="mt-1 text-sm text-red-600">{form.formState.errors.phoneDigits.message}</p>
             )}
@@ -444,13 +483,16 @@ export function LoanCalculator() {
             <Label htmlFor="email-voz" className="text-sm font-medium text-muted-foreground">
               E-mail {requiredStar}
             </Label>
-            <Input
-              id="email-voz"
-              type="email"
-              autoComplete="email"
-              className="bg-secondary border-border h-11 text-sm"
-              {...form.register("email")}
-            />
+            <div className="relative">
+              <FieldIcon icon={Mail} />
+              <Input
+                id="email-voz"
+                type="email"
+                autoComplete="email"
+                className={iconInputClass}
+                {...form.register("email")}
+              />
+            </div>
             {form.formState.errors.email && (
               <p className="mt-1 text-sm text-red-600">{form.formState.errors.email.message}</p>
             )}
