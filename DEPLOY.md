@@ -40,7 +40,7 @@ PHOTO_WIZARD_SHARE_SECRET=
 
 `https://autocash.cz/fotky/<PHOTO_WIZARD_SHARE_SECRET>`
 
-Vygenerujte jednou (min. 24 znaků, jen `A–Z a–z 0–9 _ -`, bez tečky — ať se neplete s HMAC tokenem po leadu):
+Vygenerujte jednou (min. 8 znaků, jen `A–Z a–z 0–9 _ -`, bez tečky — ať se neplete s HMAC tokenem po leadu):
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"

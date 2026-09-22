@@ -3,7 +3,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto"
 import { PHOTO_SLOT_LABELS, PHOTO_SLOTS } from "./photo-slots"
 
 export const PHOTO_WIZARD_SHARE_SECRET_ENV = "PHOTO_WIZARD_SHARE_SECRET"
-export const PHOTO_SHARE_SECRET_MIN_LENGTH = 24
+export const PHOTO_SHARE_SECRET_MIN_LENGTH = 8
 /** URL-safe, no `.` — HMAC lead tokens are always `body.sig`. */
 const SHARE_SECRET_RE = /^[A-Za-z0-9_-]+$/
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
