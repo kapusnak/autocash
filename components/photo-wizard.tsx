@@ -6,7 +6,7 @@ import { Camera, Check, ImagePlus, Loader2, MessageCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import { compressImage } from "@/lib/compress-image"
-import { PHOTO_SLOT_HEADINGS, PHOTO_SLOT_HINTS, PHOTO_SLOT_LABELS, PHOTO_SLOTS, type PhotoSlot } from "@/lib/photo-slots"
+import { PHOTO_SLOT_HINTS, PHOTO_SLOT_LABELS, PHOTO_SLOT_TITLES, PHOTO_SLOTS, type PhotoSlot } from "@/lib/photo-slots"
 import { SITE } from "@/lib/site"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -425,7 +425,7 @@ export function PhotoWizard({
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Krok {stepIndex + 1} / {PHOTO_SLOTS.length}
           </p>
-          <h1 className="font-display text-2xl font-bold mt-1">{PHOTO_SLOT_HEADINGS[slot]}</h1>
+          <h1 className="font-display text-2xl font-bold mt-1">{PHOTO_SLOT_TITLES[slot]}</h1>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{PHOTO_SLOT_HINTS[slot]}</p>
         </div>
 

@@ -11,14 +11,14 @@ export const PHOTO_SLOT_LABELS: Record<PhotoSlot, string> = {
   running: "Nastartovaný vůz",
 }
 
-/** Short Title-case headings for the photo wizard (step title only). */
-export const PHOTO_SLOT_HEADINGS: Record<PhotoSlot, string> = {
+/** Wizard step titles only — not used for filenames or operator emails. */
+export const PHOTO_SLOT_TITLES: Record<PhotoSlot, string> = {
   front: "Fotka zepředu",
   rear: "Fotka zezadu",
   side: "Fotka z boku",
-  interior: "Fotka interiér",
-  cargo: "Fotka nákladový prostor",
-  running: "Fotka nastartovaný vůz",
+  interior: "Fotka interiéru",
+  cargo: "Fotka nákladového prostoru",
+  running: "Fotka nastartovaného vozu",
 }
 
 /** Attachment filename stem (Czech label without diacritics, spaces → hyphens). */
