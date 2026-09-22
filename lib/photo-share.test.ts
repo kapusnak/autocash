@@ -60,6 +60,22 @@ test("rejects when env is missing or too weak", () => {
   })
 })
 
+test("minimum length is 8: accepts 8, rejects 7", () => {
+  assert.equal(PHOTO_SHARE_SECRET_MIN_LENGTH, 8)
+  const eight = "Ab12_-xy"
+  const seven = "Ab12_-x"
+  withShareSecret(eight, () => {
+    assert.equal(eight.length, 8)
+    assert.equal(isPhotoWizardShareToken(eight), true)
+    assert.equal(photoWizardShareUrl()?.endsWith(`/fotky/${eight}`), true)
+  })
+  withShareSecret(seven, () => {
+    assert.equal(seven.length, 7)
+    assert.equal(isPhotoWizardShareToken(seven), false)
+    assert.equal(photoWizardShareUrl(), null)
+  })
+})
+
 test("public URL is /fotky/<secret> on the site origin", () => {
   withShareSecret(GOOD_SECRET, () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://autocash.cz"

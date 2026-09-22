@@ -23,7 +23,7 @@ Bez SMTP credentials `/api/lead` vrátí 500 — očekávané.
 
 Jeden stabilní URL pro WhatsApp / SMS — bez přihlášení a bez „vygenerovat odkaz“.
 
-1. Do `.env.local` (lokálně) a do Railway Variables (produkce) nastavte `PHOTO_WIZARD_SHARE_SECRET` — dlouhý náhodný řetězec, ne slug jako `fotky` nebo `upload`:
+1. Do `.env.local` (lokálně) a do Railway Variables (produkce) nastavte `PHOTO_WIZARD_SHARE_SECRET` — min. 8 znaků (`A–Z a–z 0–9 _ -`, bez tečky), ne slug jako `fotky` nebo `upload`:
 
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
