@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 
 import { isCrawlerUserAgent } from "@/lib/crawler-user-agent"
-import { markQrLetakPending, trackQrLetak, waitForAnalytics } from "@/lib/track-qr-letak"
+import { handoffQrLetakScan } from "@/lib/track-qr-letak"
 
 function goHome() {
   window.location.replace("/")
@@ -17,21 +17,10 @@ export function QrLetakRedirect() {
     }
 
     let cancelled = false
-    markQrLetakPending()
 
-    void waitForAnalytics().then((ready) => {
+    void handoffQrLetakScan(() => {
       if (cancelled) return
-      if (!ready) {
-        // gtag never appeared — keep pending so the homepage fires once.
-        goHome()
-        return
-      }
-      trackQrLetak({
-        onDone: () => {
-          if (cancelled) return
-          goHome()
-        },
-      })
+      goHome()
     })
 
     return () => {

@@ -1,5 +1,5 @@
 /**
- * Hybrid /qr handoff: wait for gtag AND GTM, send_to GA4, no Custom Event.
+ * Hybrid /qr handoff: GTM no-op GA snippet, wait 8s, send_to GA4, no Custom Event.
  * Run: npx tsx scripts/check-track-qr-letak.ts
  */
 process.env.NEXT_PUBLIC_GTM_ID = "GTM-TEST"
@@ -36,12 +36,14 @@ const fakeWindow: {
   dataLayer: unknown[]
   google_tag_manager?: Record<string, unknown>
   setTimeout: typeof setTimeout
+  clearTimeout: typeof clearTimeout
   sessionStorage: MemoryStorage
 } = {
   gtag: undefined,
   dataLayer,
   google_tag_manager: undefined,
   setTimeout: globalThis.setTimeout.bind(globalThis),
+  clearTimeout: globalThis.clearTimeout.bind(globalThis),
   sessionStorage: storage,
 }
 
@@ -72,27 +74,40 @@ function eventParams(call: unknown[]): Record<string, unknown> | undefined {
 async function main() {
   const { readFileSync } = await import("node:fs")
   const { fileURLToPath } = await import("node:url")
+  const { shouldLoadDirectGaSnippet } = await import("../lib/direct-ga-snippet")
   const gaSrc = readFileSync(
     fileURLToPath(new URL("../components/google-analytics.tsx", import.meta.url)),
     "utf8",
   )
+  assert(gaSrc.includes("shouldLoadDirectGaSnippet"), "GoogleAnalytics must defer to the GTM no-op helper")
   assert(
-    gaSrc.includes("send_page_view: false"),
-    "GTM-owned pageviews must not get a second gtag config page_view",
+    shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ") === false,
+    "GoogleAnalytics must no-op when GTM is set",
+  )
+  assert(
+    shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "") === true,
+    "GoogleAnalytics may load a direct snippet only without GTM",
   )
 
   const {
     GA_EVENT_QR_LETAK,
+    QR_ANALYTICS_READY_TIMEOUT_MS,
+    QR_HOME_BEACON_WAIT_MS,
     QR_LETAK_PENDING,
     QR_LETAK_SENT,
     QR_LETAK_STORAGE_KEY,
+    handoffQrLetakScan,
     hasPendingQrLetak,
     isAnalyticsReady,
     isGtagReady,
     markQrLetakPending,
+    replayPendingQrLetak,
     trackQrLetak,
     waitForAnalytics,
   } = await import("../lib/track-qr-letak")
+
+  assert(QR_ANALYTICS_READY_TIMEOUT_MS === 8000, "/qr wait must be 8s like the homepage beacon")
+  assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
 
   fakeWindow.gtag = gtagMock
   assert(isGtagReady(), "Ads gtag function should count as gtag-ready")
@@ -158,6 +173,18 @@ async function main() {
   fakeWindow.gtag = gtagMock
   dataLayer.push({ event: "gtm.load" })
   assert(isAnalyticsReady(), "dataLayer gtm.load plus gtag must count as ready")
+
+  fakeWindow.google_tag_manager = undefined
+  dataLayer.length = 0
+  gtagCalls.length = 0
+  await handoffQrLetakScan(undefined, 80)
+  assert(gtagCalls.length === 0, "handoff after timeout must not invent a gtag call")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "timeout handoff keeps pending")
+
+  replayPendingQrLetak(80)
+  await new Promise((resolve) => setTimeout(resolve, 200))
+  assert(gtagCalls.length === 0, "homepage replay after timeout must not mark sent without gtag")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "homepage timeout keeps pending")
 
   console.log("ok")
 }
