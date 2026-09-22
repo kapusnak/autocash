@@ -23,4 +23,4 @@ Nasazení: viz [DEPLOY.md](./DEPLOY.md).
 
 ## Leták QR (`/qr`)
 
-Tištěný QR kód míří na `https://autocash.cz/qr` (ne na homepage). Prohlížeč počká na `window.gtag`, odešle `gtag('event', 'qr_letak')` a přesměruje na čisté `/`. Cestu neodkazujte v menu ani v sitemapě.
+Tištěný QR kód míří na `https://autocash.cz/qr` (ne na homepage). Prohlížeč počká na `window.gtag` **a** GTM (`google_tag_manager` / `gtm.load`), odešle `gtag('event', 'qr_letak')` s `send_to` na `NEXT_PUBLIC_GA_MEASUREMENT_ID` (pokud je nastavené) a přesměruje na čisté `/`. Cestu neodkazujte v menu ani v sitemapě.

@@ -12,8 +12,8 @@ export const QR_LETAK_PENDING = "pending"
 export const QR_LETAK_SENT = "sent"
 
 /**
- * Wait for `window.gtag` or the GTM container (this property does not publish
- * gtag itself). First visit / TCF cookie banner can delay the container.
+ * Wait for a live `window.gtag` **and** (when GTM is configured) the container.
+ * Ads / a partial gtag stub can exist before GTM's GA4 config (`G-…`).
  */
 export const QR_ANALYTICS_READY_TIMEOUT_MS = 4000
 /** Pause after the collector is up so GA4 config / consent defaults can apply. */
@@ -23,7 +23,8 @@ export const QR_REDIRECT_HOLD_MS = 2500
 /** Homepage safety net can wait longer — the page stays loaded. */
 export const QR_HOME_BEACON_WAIT_MS = 8000
 
-const HAS_GA = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim())
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? ""
+const HAS_GA = Boolean(GA_MEASUREMENT_ID)
 const HAS_GTM = Boolean(process.env.NEXT_PUBLIC_GTM_ID?.trim())
 const HAS_ANALYTICS = HAS_GA || HAS_GTM
 
@@ -59,9 +60,14 @@ export function isGtmReady(): boolean {
   return hasDataLayerEvent("gtm.load")
 }
 
-/** Ready to call `gtag('event')` — a live function, not merely the GTM object. */
+/**
+ * Ready to send `qr_letak`: live `gtag` function, and GTM when it owns GA4.
+ * Ads / partial gtag alone is not enough.
+ */
 export function isAnalyticsReady(): boolean {
-  return isGtagReady()
+  if (!isGtagReady()) return false
+  if (HAS_GTM && !isGtmReady()) return false
+  return true
 }
 
 /**
@@ -85,30 +91,15 @@ function delay(ms: number): Promise<void> {
   })
 }
 
-function collectorIsUp(): boolean {
-  if (isGtagReady()) return true
-  if (HAS_GTM && isGtmReady()) return true
-  return false
-}
-
-/**
- * Resolves true when `gtag('event')` can be called.
- * Waits for `window.gtag`, or for the GTM container and then installs the stub.
- */
-export async function waitForAnalytics(
-  timeoutMs = QR_ANALYTICS_READY_TIMEOUT_MS,
-): Promise<boolean> {
-  if (typeof window === "undefined") return false
-  if (!HAS_ANALYTICS) return false
-
-  const appeared = await new Promise<boolean>((resolve) => {
-    if (collectorIsUp()) {
+function waitUntil(predicate: () => boolean, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (predicate()) {
       resolve(true)
       return
     }
     const started = Date.now()
     const tick = () => {
-      if (collectorIsUp()) {
+      if (predicate()) {
         resolve(true)
         return
       }
@@ -120,12 +111,32 @@ export async function waitForAnalytics(
     }
     tick()
   })
+}
 
-  if (!appeared) return false
-  if (!isGtagReady() && HAS_GTM && isGtmReady()) ensureGtag()
-  if (!isGtagReady()) return false
+/**
+ * Resolves true when `gtag('event')` can reach GTM's GA4 destination.
+ * With GTM: wait for `google_tag_manager` or `dataLayer` `gtm.load`, then
+ * install the gtag stub if Ads/gtag is still missing.
+ * Without GTM: wait for `window.gtag` only.
+ */
+export async function waitForAnalytics(
+  timeoutMs = QR_ANALYTICS_READY_TIMEOUT_MS,
+): Promise<boolean> {
+  if (typeof window === "undefined") return false
+  if (!HAS_ANALYTICS) return false
+
+  if (HAS_GTM) {
+    const gtmUp = await waitUntil(isGtmReady, timeoutMs)
+    if (!gtmUp) return false
+    if (!isGtagReady()) ensureGtag()
+  } else {
+    const gtagUp = await waitUntil(isGtagReady, timeoutMs)
+    if (!gtagUp) return false
+  }
+
+  if (!isAnalyticsReady()) return false
   if (QR_GTAG_SETTLE_MS > 0) await delay(QR_GTAG_SETTLE_MS)
-  return isGtagReady()
+  return isAnalyticsReady()
 }
 
 export function markQrLetakPending(): void {
@@ -162,12 +173,31 @@ export function clearQrLetakFlag(): void {
 }
 
 /**
+ * `send_to` only delivers after this measurement ID is registered with
+ * `gtag('config')`. Ads `AW-…` config is not enough. GTM still owns
+ * page_view — this call is destination-only, once per page.
+ */
+function ensureGa4Configured(gtag: (...args: unknown[]) => void): string | undefined {
+  if (!HAS_GA) return undefined
+  const page = window as typeof window & { __autocashGa4QrConfigured?: boolean }
+  if (!page.__autocashGa4QrConfigured) {
+    page.__autocashGa4QrConfigured = true
+    gtag("config", GA_MEASUREMENT_ID, { send_page_view: false })
+  }
+  return GA_MEASUREMENT_ID
+}
+
+/**
  * Fires exactly one `qr_letak` via `gtag('event', …)` — never a GTM
  * `dataLayer.push({ event: 'qr_letak' })` Custom Event.
  *
+ * When `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set, registers that destination
+ * once with `gtag('config', id, { send_page_view: false })` then fires
+ * the event with `send_to`. GTM still owns page_view.
+ *
  * Marks the session flag sent only after a successful gtag handoff
  * (`event_callback` or the hold elapsed after gtag was actually called).
- * If gtag is missing, the pending flag stays so the homepage can retry once.
+ * If analytics is not ready, the pending flag stays so the homepage can retry.
  */
 export function trackQrLetak(options?: TrackQrLetakOptions): void {
   if (typeof window === "undefined") {
@@ -177,8 +207,13 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
 
   const done = finishOnce(options?.onDone)
   if (!isGtagReady() && HAS_GTM && isGtmReady()) ensureGtag()
-  const gtag = window.gtag
 
+  if (!isAnalyticsReady()) {
+    done()
+    return
+  }
+
+  const gtag = window.gtag
   if (typeof gtag !== "function") {
     done()
     return
@@ -192,9 +227,20 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
 
   window.setTimeout(succeed, holdMs)
 
-  gtag("event", GA_EVENT_QR_LETAK, {
+  const sendTo = ensureGa4Configured(gtag)
+  const eventParams: {
+    campaign_source: string
+    campaign_medium: string
+    campaign_name: string
+    send_to?: string
+    event_callback: () => void
+    event_timeout: number
+  } = {
     ...QR_LETAK_CAMPAIGN,
     event_callback: succeed,
     event_timeout: holdMs,
-  })
+  }
+  if (sendTo) eventParams.send_to = sendTo
+
+  gtag("event", GA_EVENT_QR_LETAK, eventParams)
 }

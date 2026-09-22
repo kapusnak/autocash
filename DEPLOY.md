@@ -21,6 +21,7 @@ npm start   # next start -p ${PORT:-3000}
 - Builder: Nixpacks (`nixpacks.toml` → Node 20)
 - Start: `railway.json` → `npm start`
 - `NEXT_PUBLIC_*` musí být nastavené **před** buildem (Railway Variables)
+- `/qr` `send_to`: `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-DXBBY6TFGG` (GTM dál vlastní page_view; tag `GA4 - qr_letak` nechte paused)
 
 ### Server env (tajné)
 
