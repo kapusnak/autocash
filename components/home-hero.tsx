@@ -84,8 +84,8 @@ export function HomeHero() {
                 </p>
               </div>
 
-              <div className="max-w-md space-y-3 animate-fade-up">
-                <ul className="space-y-1 rounded-2xl border border-white/15 bg-black/45 p-3 backdrop-blur-md sm:p-3.5">
+              <div className="w-full space-y-3 animate-fade-up">
+                <ul className="max-w-md space-y-1 rounded-2xl border border-white/15 bg-black/45 p-3 backdrop-blur-md sm:p-3.5">
                   {chips.map(({ icon: Icon, label }) => (
                     <li key={label} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
@@ -96,7 +96,7 @@ export function HomeHero() {
                   ))}
                 </ul>
 
-                <div className="pt-1 lg:hidden">
+                <div className="flex justify-center pt-1 lg:hidden">
                   <a
                     href="#formular"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-gold-foreground shadow-lg shadow-black/20 animate-bounce-y sm:text-base"
