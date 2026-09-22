@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server"
 
-import { PHOTO_SLOT_LABELS, PHOTO_SLOTS, photoSlotFilename, type PhotoSlot } from "@/lib/photo-slots"
+import { collectPhotoFiles, photoAttachments } from "@/lib/photo-files"
+import { PHOTO_SLOT_LABELS, PHOTO_SLOTS } from "@/lib/photo-slots"
 import { verifyPhotoToken } from "@/lib/photo-token"
 import { getMailer, leadNotifyTo, mailFromAddress } from "@/lib/mailer"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
-
-const MAX_FILE_BYTES = 1_000_000
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/webp"])
 
 function escapeHtml(value: string): string {
   return value
@@ -56,43 +54,12 @@ export async function POST(req: Request) {
     )
   }
 
-  const files = new Map<PhotoSlot, File>()
-  for (const slot of PHOTO_SLOTS) {
-    const value = form.get(slot)
-    if (!(value instanceof File) || value.size === 0) {
-      return NextResponse.json(
-        { error: `Chybí fotka: ${PHOTO_SLOT_LABELS[slot]}.` },
-        { status: 400 },
-      )
-    }
-    const type = (value.type || "").toLowerCase()
-    if (!ALLOWED_TYPES.has(type)) {
-      return NextResponse.json(
-        { error: `Fotka ${PHOTO_SLOT_LABELS[slot]} musí být JPEG nebo WebP.` },
-        { status: 400 },
-      )
-    }
-    if (value.size > MAX_FILE_BYTES) {
-      return NextResponse.json(
-        { error: `Fotka ${PHOTO_SLOT_LABELS[slot]} je příliš velká.` },
-        { status: 400 },
-      )
-    }
-    files.set(slot, value)
+  const photos = collectPhotoFiles(form)
+  if (!photos.ok) {
+    return NextResponse.json({ error: photos.error }, { status: photos.status })
   }
 
-  const attachments = await Promise.all(
-    PHOTO_SLOTS.map(async (slot) => {
-      const file = files.get(slot)!
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const ext = file.type === "image/webp" ? "webp" : "jpg"
-      return {
-        filename: photoSlotFilename(payload.code, slot, ext),
-        content: buffer,
-        contentType: file.type,
-      }
-    }),
-  )
+  const attachments = await photoAttachments(photos.files, payload.code)
 
   const slotList = PHOTO_SLOTS.map((slot) => `- ${PHOTO_SLOT_LABELS[slot]}`).join("\n")
   const domainTag = notifyDomainTag()

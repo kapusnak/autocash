@@ -2,7 +2,10 @@ import type { Metadata } from "next"
 
 import { Header } from "@/components/header"
 import { PhotoWizard } from "@/components/photo-wizard"
+import { isPhotoWizardShareToken } from "@/lib/photo-share"
 import { verifyPhotoToken } from "@/lib/photo-token"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Fotky vozu",
@@ -14,6 +17,7 @@ export default async function FotkyPage({ params }: { params: Promise<{ token: s
   const { token: raw } = await params
   const token = decodeURIComponent(raw)
   const payload = verifyPhotoToken(token)
+  const share = !payload && isPhotoWizardShareToken(token)
 
   return (
     <main className="min-h-dvh bg-background">
@@ -22,6 +26,8 @@ export default async function FotkyPage({ params }: { params: Promise<{ token: s
         <div className="mx-auto flex justify-center">
           {payload ? (
             <PhotoWizard token={token} code={payload.code} name={payload.name} />
+          ) : share ? (
+            <PhotoWizard token={token} code="" name="" variant="share" />
           ) : (
             <div className="max-w-md text-center space-y-3">
               <h1 className="font-display text-2xl font-bold">Odkaz už neplatí</h1>

@@ -10,10 +10,16 @@ import { PHOTO_SLOT_HINTS, PHOTO_SLOT_LABELS, PHOTO_SLOTS, type PhotoSlot } from
 import { SITE } from "@/lib/site"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type SlotDraft = { dataUrl: string }
 
 type DraftMap = Partial<Record<PhotoSlot, SlotDraft>>
+
+type WizardVariant = "lead" | "share"
+
+type ContactDraft = { name: string; phone: string; note: string }
 
 function storageKey(token: string) {
   return `autocash-fotky:${token}`
@@ -21,6 +27,10 @@ function storageKey(token: string) {
 
 function doneKey(token: string) {
   return `autocash-fotky-done:${token}`
+}
+
+function contactKey(token: string) {
+  return `autocash-fotky-contact:${token}`
 }
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -44,9 +54,12 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([bytes], { type: mime })
 }
 
-function whatsappHref(code: string): string {
+function whatsappHref(code: string, variant: WizardVariant): string {
   const digits = SITE.phonePrimaryTel.replace(/\D/g, "")
-  const text = `Dobrý den, posílám fotky k poptávce ${code}.`
+  const text =
+    variant === "share"
+      ? "Dobrý den, posílám fotky vozu."
+      : `Dobrý den, posílám fotky k poptávce ${code}.`
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
 }
 
@@ -102,11 +115,14 @@ export function PhotoWizard({
   token,
   code,
   name,
+  variant = "lead",
 }: {
   token: string
   code: string
   name: string
+  variant?: WizardVariant
 }) {
+  const isShare = variant === "share"
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const [drafts, setDrafts] = useState<DraftMap>({})
@@ -115,6 +131,8 @@ export function PhotoWizard({
   const [compressing, setCompressing] = useState(false)
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
+  const [pairing, setPairing] = useState(false)
+  const [contact, setContact] = useState<ContactDraft>({ name: "", phone: "", note: "" })
 
   useEffect(() => {
     try {
@@ -124,23 +142,49 @@ export function PhotoWizard({
         return
       }
       const raw = sessionStorage.getItem(storageKey(token))
+      let parsed: DraftMap = {}
       if (raw) {
-        const parsed = JSON.parse(raw) as DraftMap
+        parsed = JSON.parse(raw) as DraftMap
         setDrafts(parsed)
         const firstMissing = PHOTO_SLOTS.findIndex((slot) => !parsed[slot]?.dataUrl)
         setStepIndex(firstMissing === -1 ? PHOTO_SLOTS.length - 1 : firstMissing)
+      }
+      if (isShare) {
+        const contactRaw = sessionStorage.getItem(contactKey(token))
+        if (contactRaw) {
+          const parsedContact = JSON.parse(contactRaw) as ContactDraft
+          setContact({
+            name: typeof parsedContact.name === "string" ? parsedContact.name : "",
+            phone: typeof parsedContact.phone === "string" ? parsedContact.phone : "",
+            note: typeof parsedContact.note === "string" ? parsedContact.note : "",
+          })
+        }
+        const allIn = PHOTO_SLOTS.every((slot) => parsed[slot]?.dataUrl)
+        if (allIn) setPairing(true)
       }
     } catch {
       /* ignore */
     }
     setHydrated(true)
-  }, [token])
+  }, [token, isShare])
 
   const persist = useCallback(
     (next: DraftMap) => {
       setDrafts(next)
       try {
         sessionStorage.setItem(storageKey(token), JSON.stringify(next))
+      } catch {
+        /* quota — keep in memory */
+      }
+    },
+    [token],
+  )
+
+  const persistContact = useCallback(
+    (next: ContactDraft) => {
+      setContact(next)
+      try {
+        sessionStorage.setItem(contactKey(token), JSON.stringify(next))
       } catch {
         /* quota — keep in memory */
       }
@@ -158,7 +202,7 @@ export function PhotoWizard({
     return first ? `${first}, ` : ""
   }, [name])
 
-  async function submitAll(source: DraftMap) {
+  async function submitAll(source: DraftMap, contactFields: ContactDraft) {
     const form = new FormData()
     form.append("token", token)
     for (const s of PHOTO_SLOTS) {
@@ -169,9 +213,14 @@ export function PhotoWizard({
       }
       form.append(s, dataUrlToBlob(dataUrl), `${s}.jpg`)
     }
+    if (isShare) {
+      form.append("name", contactFields.name.trim())
+      form.append("phone", contactFields.phone.trim())
+      form.append("note", contactFields.note.trim())
+    }
     setSending(true)
     try {
-      const res = await fetch("/api/fotky", { method: "POST", body: form })
+      const res = await fetch(isShare ? "/api/fotky/sdilene" : "/api/fotky", { method: "POST", body: form })
       if (!res.ok) {
         let detail = `HTTP ${res.status}`
         try {
@@ -184,6 +233,7 @@ export function PhotoWizard({
       }
       try {
         sessionStorage.removeItem(storageKey(token))
+        sessionStorage.removeItem(contactKey(token))
         sessionStorage.setItem(doneKey(token), "1")
       } catch {
         /* ignore */
@@ -209,8 +259,10 @@ export function PhotoWizard({
       const next = { ...drafts, [slot]: { dataUrl } }
       persist(next)
       const isLast = stepIndex >= PHOTO_SLOTS.length - 1
-      if (isLast) {
-        await submitAll(next)
+      if (isLast && isShare) {
+        setPairing(true)
+      } else if (isLast) {
+        await submitAll(next, contact)
       } else {
         setStepIndex((i) => Math.min(i + 1, PHOTO_SLOTS.length - 1))
       }
@@ -245,11 +297,128 @@ export function PhotoWizard({
           </div>
           <h1 className="font-display text-2xl font-bold">Fotky máme</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Děkujeme. Ozveme se vám s oceněním vozu. Kód poptávky: <strong className="text-foreground">{code}</strong>
+            {isShare ? (
+              contact.phone.trim()
+                ? "Děkujeme. Ozveme se vám s oceněním vozu na uvedené číslo."
+                : "Děkujeme. Fotky jsme dostali — když budeme potřebovat doplnit poptávku, ozveme se."
+            ) : (
+              <>
+                Děkujeme. Ozveme se vám s oceněním vozu. Kód poptávky:{" "}
+                <strong className="text-foreground">{code}</strong>
+              </>
+            )}
           </p>
           <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90 font-bold">
             <Link href="/">Zpět na Autocash</Link>
           </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isShare && pairing) {
+    return (
+      <Card className="w-full max-w-md border-0 shadow-xl">
+        <CardContent className="px-5 py-6 space-y-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Volitelné údaje</p>
+            <h1 className="font-display text-2xl font-bold mt-1">Fotky jsou připravené</h1>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              Jméno, telefon a poznámku můžete doplnit, ať fotky snadno přiřadíme k poptávce. Nic z toho vyplňovat
+              nemusíte — odeslání projde i s prázdnými poli.
+            </p>
+          </div>
+
+          <div className="flex gap-1.5" aria-hidden>
+            {PHOTO_SLOTS.map((s) => (
+              <div key={s} className="h-1.5 flex-1 rounded-full bg-gold" />
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="share-name">Jméno</Label>
+              <Input
+                id="share-name"
+                name="name"
+                autoComplete="name"
+                autoCapitalize="words"
+                maxLength={120}
+                placeholder="např. Jan Novák"
+                value={contact.name}
+                onChange={(e) => persistContact({ ...contact, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="share-phone">Telefon</Label>
+              <Input
+                id="share-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                maxLength={40}
+                placeholder="+420 776 123 456"
+                value={contact.phone}
+                onChange={(e) => persistContact({ ...contact, phone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="share-note">Poznámka</Label>
+              <textarea
+                id="share-note"
+                name="note"
+                rows={3}
+                maxLength={2000}
+                placeholder="Třeba číslo poptávky, SPZ, nebo kdy se vám hodí zavolat"
+                value={contact.note}
+                onChange={(e) => persistContact({ ...contact, note: e.target.value })}
+                className="placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input h-auto w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            disabled={sending}
+            className="w-full h-12 font-bold"
+            onClick={() => void submitAll(drafts, contact)}
+          >
+            {sending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Odesílám fotky…
+              </>
+            ) : (
+              `Odeslat všech ${PHOTO_SLOTS.length} fotek`
+            )}
+          </Button>
+
+          <button
+            type="button"
+            className="w-full text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setPairing(false)
+              setStepIndex(PHOTO_SLOTS.length - 1)
+            }}
+          >
+            Zpět na předchozí fotku
+          </button>
+
+          <div className="border-t border-border pt-4 space-y-3 text-center">
+            <a
+              href={whatsappHref(code, "share")}
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Nebo pošlete na WhatsApp
+            </a>
+            <Link href="/" className="block text-sm text-muted-foreground hover:text-foreground">
+              Teď ne, pošlu později
+            </Link>
+          </div>
         </CardContent>
       </Card>
     )
@@ -337,13 +506,21 @@ export function PhotoWizard({
             type="button"
             disabled={sending}
             className="w-full h-12 font-bold"
-            onClick={() => void submitAll(drafts)}
+            onClick={() => {
+              if (isShare) {
+                setPairing(true)
+                return
+              }
+              void submitAll(drafts, contact)
+            }}
           >
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Odesílám fotky…
               </>
+            ) : isShare ? (
+              "Pokračovat k odeslání"
             ) : (
               `Odeslat všech ${PHOTO_SLOTS.length} fotek`
             )}
@@ -365,30 +542,52 @@ export function PhotoWizard({
           </button>
         ) : null}
 
-        <p className="text-center text-xs text-muted-foreground">
-          Kód poptávky <span className="font-semibold text-foreground">{code}</span>
-        </p>
-
-        <div className="border-t border-border pt-4 space-y-3 text-center">
-          <a
-            href={whatsappHref(code)}
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Nebo pošlete na WhatsApp a uveďte kód {code}
-          </a>
-          <div className="space-y-1.5">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+        {isShare ? (
+          <div className="border-t border-border pt-4 space-y-3 text-center">
+            <a
+              href={whatsappHref(code, "share")}
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Nebo pošlete na WhatsApp
+            </a>
+            <Link href="/" className="block text-sm text-muted-foreground hover:text-foreground">
               Teď ne, pošlu později
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed px-1">
-              Fotografie můžete doplnit i později. Odkaz pro jejich nahrání jsme vám poslali také v e-mailu s
-              potvrzením přijetí poptávky.
+              Fotografie můžete doplnit i později stejným odkazem.
             </p>
           </div>
-        </div>
+        ) : (
+          <>
+            <p className="text-center text-xs text-muted-foreground">
+              Kód poptávky <span className="font-semibold text-foreground">{code}</span>
+            </p>
+
+            <div className="border-t border-border pt-4 space-y-3 text-center">
+              <a
+                href={whatsappHref(code, "lead")}
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Nebo pošlete na WhatsApp a uveďte kód {code}
+              </a>
+              <div className="space-y-1.5">
+                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+                  Teď ne, pošlu později
+                </Link>
+                <p className="text-xs text-muted-foreground leading-relaxed px-1">
+                  Fotografie můžete doplnit i později. Odkaz pro jejich nahrání jsme vám poslali také v e-mailu s
+                  potvrzením přijetí poptávky.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )
