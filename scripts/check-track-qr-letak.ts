@@ -146,6 +146,10 @@ async function main() {
   assert(!dataLayerHasQrCustomEvent(), "failed handoff must not push a Custom Event")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "failed gtag handoff keeps pending")
 
+  fakeWindow.gtag = gtagMock
+  dataLayer.push({ event: "gtm.load" })
+  assert(isAnalyticsReady(), "dataLayer gtm.load plus gtag must count as ready")
+
   console.log("ok")
 }
 
