@@ -6,9 +6,9 @@ import {
   shouldSuppressDirectGaPageView,
 } from "./direct-ga-snippet.ts"
 
-test("GoogleAnalytics loads gtag.js even when GTM id is set", () => {
-  assert.equal(shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ"), true)
-  assert.equal(shouldLoadDirectGaSnippet("G-DXBBY6TFGG", " GTM-P6VZJXTQ "), true)
+test("GoogleAnalytics no-ops when GTM id is set (hnedpenize hybrid)", () => {
+  assert.equal(shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ"), false)
+  assert.equal(shouldLoadDirectGaSnippet("G-DXBBY6TFGG", " GTM-P6VZJXTQ "), false)
 })
 
 test("GoogleAnalytics no-ops without a measurement id", () => {
@@ -30,10 +30,6 @@ test("GTM hybrid config suppresses page_view; GTM-absent config is default", () 
   assert.equal(
     directGaConfigSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ"),
     "gtag('config', 'G-DXBBY6TFGG', { send_page_view: false });",
-  )
-  assert.equal(
-    directGaConfigSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ", "__autocashGtag"),
-    "__autocashGtag('config', 'G-DXBBY6TFGG', { send_page_view: false });",
   )
   assert.equal(directGaConfigSnippet("G-DXBBY6TFGG", ""), "gtag('config', 'G-DXBBY6TFGG');")
 })

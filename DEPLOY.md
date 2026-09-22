@@ -21,7 +21,7 @@ npm start   # next start -p ${PORT:-3000}
 - Builder: Nixpacks (`nixpacks.toml` → Node 20)
 - Start: `railway.json` → `npm start`
 - `NEXT_PUBLIC_*` musí být nastavené **před** buildem (Railway Variables)
-- `/qr` `send_to`: `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-DXBBY6TFGG` (measurement `gtag/js` na izolovaný dataLayer `autocashGaDl` vedle GTM; config `send_page_view: false`; tag `GA4 - qr_letak` nechte paused)
+- `/qr` `qr_letak`: `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-DXBBY6TFGG` (GTM-free iframe collector; GTM tag `GA4 - qr_letak` stays paused)
 
 ### Server env (tajné)
 

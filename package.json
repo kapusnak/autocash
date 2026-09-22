@@ -10,7 +10,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start -p ${PORT:-3000}",
-    "test": "node --experimental-strip-types --test lib/direct-ga-snippet.test.ts lib/track-qr-letak.test.ts && npx tsx scripts/check-track-qr-letak.ts && npx tsx scripts/check-crawler-user-agent.ts && npx tsx scripts/check-lead-email-subject.ts"
+    "test": "node --experimental-strip-types --test lib/direct-ga-snippet.test.ts lib/qr-gtag-document.test.ts lib/track-qr-letak.test.ts && npx tsx scripts/check-track-qr-letak.ts && npx tsx scripts/check-crawler-user-agent.ts && npx tsx scripts/check-lead-email-subject.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

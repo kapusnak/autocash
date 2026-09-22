@@ -1,14 +1,14 @@
 /**
  * Direct `gtag/js` snippet for the GA4 measurement ID.
- * Always load when the id is set — including alongside GTM. Hybrid then
- * uses an isolated dataLayer (`l=autocashGaDl`) and `send_page_view: false`
- * so GTM keeps page_view.
+ * Hybrid (GTM + GA) skips this — GTM owns page_view, and `/qr` fires
+ * `qr_letak` from a GTM-free iframe. Match hnedpenize: no second G- gtag.js
+ * beside GTM.
  */
 export function shouldLoadDirectGaSnippet(
   measurementId: string | undefined = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-  _gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID,
+  gtmId: string | undefined = process.env.NEXT_PUBLIC_GTM_ID,
 ): boolean {
-  return Boolean(measurementId?.trim())
+  return Boolean(measurementId?.trim()) && !gtmId?.trim()
 }
 
 /** When GTM is present, never emit a second default page_view from this snippet. */
