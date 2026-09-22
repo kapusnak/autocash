@@ -23,4 +23,4 @@ Nasazení: viz [DEPLOY.md](./DEPLOY.md).
 
 ## Leták QR (`/qr`)
 
-Tištěný QR kód míří na `https://autocash.cz/qr` (ne na homepage). Prohlížeč počká až 8 s na GTM (`google_tag_manager` / `gtm.load`), zaregistruje GA4 přes `gtag('config', id, { send_page_view: false })`, odešle `gtag('event', 'qr_letak')` s `send_to` na `NEXT_PUBLIC_GA_MEASUREMENT_ID` a až potom přesměruje na čisté `/`. Když je nastavené `NEXT_PUBLIC_GTM_ID`, `GoogleAnalytics` nenačítá druhý gtag.js — page_view vlastní GTM. Cestu neodkazujte v menu ani v sitemapě.
+Tištěný QR kód míří na `https://autocash.cz/qr` (ne na homepage). `GoogleAnalytics` vždy načte `gtag/js?id=NEXT_PUBLIC_GA_MEASUREMENT_ID` (i vedle GTM). Když je GTM nastavené, config je jen `gtag('config', id, { send_page_view: false })` — page_view vlastní GTM. `/qr` počká až 8 s na `window.gtag` (ne na GTM), odešle `gtag('event', 'qr_letak')` s `send_to` a až potom přesměruje na čisté `/`. Cestu neodkazujte v menu ani v sitemapě.

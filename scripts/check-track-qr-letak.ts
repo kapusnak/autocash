@@ -1,5 +1,6 @@
 /**
- * Hybrid /qr handoff: GTM no-op GA snippet, wait 8s, send_to GA4, no Custom Event.
+ * Hybrid /qr handoff: load gtag.js with GTM, wait for window.gtag (not GTM),
+ * send_to GA4, no Custom Event.
  * Run: npx tsx scripts/check-track-qr-letak.ts
  */
 process.env.NEXT_PUBLIC_GTM_ID = "GTM-TEST"
@@ -74,19 +75,31 @@ function eventParams(call: unknown[]): Record<string, unknown> | undefined {
 async function main() {
   const { readFileSync } = await import("node:fs")
   const { fileURLToPath } = await import("node:url")
-  const { shouldLoadDirectGaSnippet } = await import("../lib/direct-ga-snippet")
+  const { directGaConfigSnippet, shouldLoadDirectGaSnippet } = await import(
+    "../lib/direct-ga-snippet"
+  )
   const gaSrc = readFileSync(
     fileURLToPath(new URL("../components/google-analytics.tsx", import.meta.url)),
     "utf8",
   )
-  assert(gaSrc.includes("shouldLoadDirectGaSnippet"), "GoogleAnalytics must defer to the GTM no-op helper")
+  assert(gaSrc.includes("shouldLoadDirectGaSnippet"), "GoogleAnalytics must still gate on measurement id")
+  assert(gaSrc.includes("googletagmanager.com/gtag/js?id="), "GoogleAnalytics must load gtag.js")
+  assert(gaSrc.includes("directGaConfigSnippet"), "GoogleAnalytics must use the shared config helper")
   assert(
-    shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ") === false,
-    "GoogleAnalytics must no-op when GTM is set",
+    shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ") === true,
+    "GoogleAnalytics must load gtag.js even when GTM is set",
   )
   assert(
     shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "") === true,
-    "GoogleAnalytics may load a direct snippet only without GTM",
+    "GoogleAnalytics may load a direct snippet without GTM",
+  )
+  assert(
+    directGaConfigSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ").includes("send_page_view: false"),
+    "GTM hybrid config must suppress page_view",
+  )
+  assert(
+    shouldLoadDirectGaSnippet("", "GTM-P6VZJXTQ") === false,
+    "GoogleAnalytics must no-op without a measurement id",
   )
 
   const {
@@ -110,34 +123,13 @@ async function main() {
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
 
   fakeWindow.gtag = gtagMock
-  assert(isGtagReady(), "Ads gtag function should count as gtag-ready")
-  assert(!isAnalyticsReady(), "Ads/partial gtag alone must not count as analytics-ready")
+  assert(isGtagReady(), "gtag function should count as gtag-ready")
+  assert(isAnalyticsReady(), "GA measurement id must not require GTM to be ready")
 
   const adsOnly = await waitForAnalytics(150)
-  assert(!adsOnly, "waitForAnalytics must not resolve on Ads gtag before GTM")
-  assert(gtagCalls.length === 0, "must not fire while waiting for GTM")
+  assert(adsOnly, "waitForAnalytics must resolve on window.gtag when GA id is set")
 
   markQrLetakPending()
-  await new Promise<void>((resolve) => {
-    trackQrLetak({ onDone: () => resolve() })
-  })
-  assert(gtagCalls.length === 0, "must not call gtag when only Ads/partial gtag exists")
-  assert(!dataLayerHasQrCustomEvent(), "Ads-only miss must not push a Custom Event")
-  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "Ads-only miss keeps pending")
-
-  fakeWindow.gtag = undefined
-  fakeWindow.google_tag_manager = { "GTM-TEST": {} }
-  assert(!isGtagReady(), "GTM object alone must not count as gtag-ready")
-  assert(!isAnalyticsReady(), "GTM without gtag must not count as analytics-ready")
-
-  const readyViaStub = await waitForAnalytics(200)
-  assert(readyViaStub, "waitForAnalytics should install a gtag stub after GTM is up")
-  assert(isGtagReady(), "stub must define window.gtag")
-  assert(isAnalyticsReady(), "gtag + GTM must count as analytics-ready")
-
-  assert(hasPendingQrLetak(), "pending flag should still be set")
-
-  fakeWindow.gtag = gtagMock
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
   })
@@ -159,20 +151,23 @@ async function main() {
   assert(!hasPendingQrLetak(), "pending must clear after gtag handoff")
 
   fakeWindow.gtag = undefined
-  fakeWindow.google_tag_manager = undefined
+  fakeWindow.google_tag_manager = { "GTM-TEST": {} }
   dataLayer.length = 0
   gtagCalls.length = 0
+  assert(!isGtagReady(), "GTM object alone must not count as gtag-ready")
+  assert(!isAnalyticsReady(), "GTM without gtag must not count as analytics-ready")
+
+  const readyViaStub = await waitForAnalytics(200)
+  assert(!readyViaStub, "must not install a gtag stub when GA measurement id is set")
+  assert(!isGtagReady(), "must not invent window.gtag while waiting for gtag.js")
+
   markQrLetakPending()
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
   })
-  assert(gtagCalls.length === 0, "must not call gtag when it is missing and GTM is not ready")
+  assert(gtagCalls.length === 0, "must not call gtag when it is missing")
   assert(!dataLayerHasQrCustomEvent(), "failed handoff must not push a Custom Event")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "failed gtag handoff keeps pending")
-
-  fakeWindow.gtag = gtagMock
-  dataLayer.push({ event: "gtm.load" })
-  assert(isAnalyticsReady(), "dataLayer gtm.load plus gtag must count as ready")
 
   fakeWindow.google_tag_manager = undefined
   dataLayer.length = 0
@@ -185,6 +180,16 @@ async function main() {
   await new Promise((resolve) => setTimeout(resolve, 200))
   assert(gtagCalls.length === 0, "homepage replay after timeout must not mark sent without gtag")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "homepage timeout keeps pending")
+
+  fakeWindow.gtag = gtagMock
+  gtagCalls.length = 0
+  await handoffQrLetakScan(undefined, 200)
+  assert(
+    gtagCalls.some((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK),
+    "handoff must fire qr_letak once gtag exists, without waiting for GTM",
+  )
+  assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "gtag handoff without GTM marks sent")
 
   console.log("ok")
 }
