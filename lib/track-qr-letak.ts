@@ -173,11 +173,27 @@ export function clearQrLetakFlag(): void {
 }
 
 /**
+ * `send_to` only delivers after this measurement ID is registered with
+ * `gtag('config')`. Ads `AW-…` config is not enough. GTM still owns
+ * page_view — this call is destination-only, once per page.
+ */
+function ensureGa4Configured(gtag: (...args: unknown[]) => void): string | undefined {
+  if (!HAS_GA) return undefined
+  const page = window as typeof window & { __autocashGa4QrConfigured?: boolean }
+  if (!page.__autocashGa4QrConfigured) {
+    page.__autocashGa4QrConfigured = true
+    gtag("config", GA_MEASUREMENT_ID, { send_page_view: false })
+  }
+  return GA_MEASUREMENT_ID
+}
+
+/**
  * Fires exactly one `qr_letak` via `gtag('event', …)` — never a GTM
  * `dataLayer.push({ event: 'qr_letak' })` Custom Event.
  *
- * When `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set, the hit uses `send_to` so it
- * reaches that GA4 stream even if Ads gtag loaded first.
+ * When `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set, registers that destination
+ * once with `gtag('config', id, { send_page_view: false })` then fires
+ * the event with `send_to`. GTM still owns page_view.
  *
  * Marks the session flag sent only after a successful gtag handoff
  * (`event_callback` or the hold elapsed after gtag was actually called).
@@ -211,6 +227,7 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
 
   window.setTimeout(succeed, holdMs)
 
+  const sendTo = ensureGa4Configured(gtag)
   const eventParams: {
     campaign_source: string
     campaign_medium: string
@@ -223,7 +240,7 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     event_callback: succeed,
     event_timeout: holdMs,
   }
-  if (HAS_GA) eventParams.send_to = GA_MEASUREMENT_ID
+  if (sendTo) eventParams.send_to = sendTo
 
   gtag("event", GA_EVENT_QR_LETAK, eventParams)
 }

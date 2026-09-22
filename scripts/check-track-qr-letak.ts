@@ -127,7 +127,16 @@ async function main() {
     trackQrLetak({ onDone: () => resolve() })
   })
 
-  const qrCall = gtagCalls.find((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK)
+  const configIndex = gtagCalls.findIndex((call) => call[0] === "config")
+  const qrIndex = gtagCalls.findIndex((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK)
+  assert(configIndex >= 0, "must gtag('config', GA4 id) before the event")
+  assert(gtagCalls[configIndex][1] === "G-DXBBY6TFGG", "config must target the GA4 measurement id")
+  assert(
+    eventParams(gtagCalls[configIndex])?.send_page_view === false,
+    "GA4 config must not send a second page_view",
+  )
+  assert(qrIndex > configIndex, "config must run before qr_letak")
+  const qrCall = gtagCalls[qrIndex]
   assert(qrCall, "must call gtag('event', 'qr_letak')")
   assert(eventParams(qrCall)?.send_to === "G-DXBBY6TFGG", "gtag event must send_to the GA4 id")
   assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
