@@ -11,6 +11,16 @@ export const PHOTO_SLOT_LABELS: Record<PhotoSlot, string> = {
   running: "Nastartovaný vůz",
 }
 
+/** Short Title-case headings for the photo wizard (step title only). */
+export const PHOTO_SLOT_HEADINGS: Record<PhotoSlot, string> = {
+  front: "Fotka zepředu",
+  rear: "Fotka zezadu",
+  side: "Fotka z boku",
+  interior: "Fotka interiér",
+  cargo: "Fotka nákladový prostor",
+  running: "Fotka nastartovaný vůz",
+}
+
 /** Attachment filename stem (Czech label without diacritics, spaces → hyphens). */
 export function photoSlotFilename(code: string, slot: PhotoSlot, ext: string): string {
   const label = PHOTO_SLOT_LABELS[slot]
