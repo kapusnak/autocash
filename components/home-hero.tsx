@@ -1,47 +1,30 @@
 import { ArrowDown, Car, Clock, MapPin, Shield } from "lucide-react"
-import { getImageProps } from "next/image"
+import Image from "next/image"
 
 import { LoanCalculator } from "@/components/loan-calculator"
 
 const HERO_ALT = "Auto připravené k ocenění"
-const HERO_QUALITY = 85
-/** Full-bleed photo on mobile; left column of the split hero on desktop (form is ~26.5rem). */
-const HERO_DESKTOP_SIZES = "(max-width: 1023px) 100vw, min(58vw, 56rem)"
-const HERO_MOBILE_SIZES = "100vw"
+/** 2560×1440 source — quality 90 keeps Retina crops sharp without a soft 1600px mobile twin. */
+const HERO_QUALITY = 90
+/**
+ * Mobile: full-bleed photo column ≈ 100vw.
+ * Desktop (lg+): photo is the left 1.2fr track beside a ~26.5rem form — measured ~900–1100 CSS
+ * at common Retina widths. Cap at 70rem (not 56rem) so DPR2 selects w≥2048/2560, not an
+ * undersized 1920 candidate.
+ */
+const HERO_SIZES = "(max-width: 1023px) 100vw, min(60vw, 70rem)"
 
 function HeroPhoto() {
-  const {
-    props: { srcSet: mobileSrcSet },
-  } = getImageProps({
-    src: "/hero-car-sm.webp",
-    alt: HERO_ALT,
-    fill: true,
-    priority: true,
-    quality: HERO_QUALITY,
-    sizes: HERO_MOBILE_SIZES,
-  })
-  const {
-    props: { srcSet: desktopSrcSet, ...img },
-  } = getImageProps({
-    src: "/hero-car.webp",
-    alt: HERO_ALT,
-    fill: true,
-    priority: true,
-    quality: HERO_QUALITY,
-    sizes: HERO_DESKTOP_SIZES,
-  })
-
   return (
-    <picture className="absolute inset-0 block">
-      <source media="(max-width: 767px)" srcSet={mobileSrcSet} sizes={HERO_MOBILE_SIZES} />
-      <source media="(min-width: 768px)" srcSet={desktopSrcSet} sizes={HERO_DESKTOP_SIZES} />
-      <img
-        {...img}
-        alt={HERO_ALT}
-        srcSet={desktopSrcSet}
-        className="absolute inset-0 h-full w-full object-cover object-[52%_58%] sm:object-[54%_52%] lg:object-[46%_50%]"
-      />
-    </picture>
+    <Image
+      src="/hero-car.webp"
+      alt={HERO_ALT}
+      fill
+      priority
+      quality={HERO_QUALITY}
+      sizes={HERO_SIZES}
+      className="object-cover object-[52%_58%] sm:object-[54%_52%] lg:object-[46%_50%]"
+    />
   )
 }
 
