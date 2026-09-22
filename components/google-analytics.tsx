@@ -1,18 +1,15 @@
 "use client"
 
 import Script from "next/script"
+import { shouldLoadDirectGaSnippet } from "@/lib/direct-ga-snippet"
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-const GTM_OWNS_PAGEVIEWS = Boolean(process.env.NEXT_PUBLIC_GTM_ID?.trim())
 
 export function GoogleAnalytics() {
-  if (!GA_MEASUREMENT_ID) return null
-
-  // GTM already sends the GA4 page_view. A second default `gtag('config')`
-  // would duplicate it; keep the destination registered for /qr `send_to`.
-  const configCall = GTM_OWNS_PAGEVIEWS
-    ? `gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });`
-    : `gtag('config', '${GA_MEASUREMENT_ID}');`
+  // Hybrid: GTM owns page_view. NEXT_PUBLIC_GA_MEASUREMENT_ID is still read
+  // by track-qr-letak for a silent gtag config + send_to — do not load a
+  // second gtag.js / page_view snippet here.
+  if (!shouldLoadDirectGaSnippet()) return null
 
   return (
     <>
@@ -25,7 +22,7 @@ export function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          ${configCall}
+          gtag('config', '${GA_MEASUREMENT_ID}');
         `}
       </Script>
     </>
