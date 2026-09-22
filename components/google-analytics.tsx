@@ -5,6 +5,7 @@ import {
   directGaConfigSnippet,
   shouldLoadDirectGaSnippet,
 } from "@/lib/direct-ga-snippet"
+import { markGtagJsLoaded } from "@/lib/track-qr-letak"
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID
@@ -19,6 +20,8 @@ export function GoogleAnalytics() {
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="afterInteractive"
+        onLoad={markGtagJsLoaded}
+        onReady={markGtagJsLoaded}
       />
       <Script id="google-analytics" strategy="afterInteractive">
         {`

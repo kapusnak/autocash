@@ -7,8 +7,8 @@ import { replayPendingQrLetak } from "@/lib/track-qr-letak"
 
 /**
  * Safety net: replay `qr_letak` via gtag on the homepage only if /qr never
- * completed a gtag handoff (pending flag still set). Still attempts track
- * after the wait even if gtag.js was slow — track keeps pending unless gtag ran.
+ * got `event_callback` (pending flag still set). /qr may redirect on the hold
+ * timeout without marking sent so this beacon can retry once the collector is up.
  */
 export function QrLetakHomeBeacon() {
   useEffect(() => {

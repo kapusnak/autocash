@@ -1,6 +1,6 @@
 /**
- * Hybrid /qr handoff: load gtag.js with GTM, wait for window.gtag (not GTM),
- * send_to GA4, no Custom Event.
+ * Hybrid /qr handoff: load gtag.js with GTM, wait for executed gtag/js (not
+ * the inline stub), send_to GA4, no Custom Event, mark sent only on callback.
  * Run: npx tsx scripts/check-track-qr-letak.ts
  */
 process.env.NEXT_PUBLIC_GTM_ID = "GTM-TEST"
@@ -32,24 +32,36 @@ function gtagMock(...args: unknown[]) {
   }
 }
 
+function gtagStubNoCallback(...args: unknown[]) {
+  gtagCalls.push(args)
+}
+
 const fakeWindow: {
   gtag?: typeof gtagMock
   dataLayer: unknown[]
   google_tag_manager?: Record<string, unknown>
+  __autocashGtagJsLoaded?: boolean
   setTimeout: typeof setTimeout
   clearTimeout: typeof clearTimeout
   sessionStorage: MemoryStorage
+  performance: typeof performance
 } = {
   gtag: undefined,
   dataLayer,
   google_tag_manager: undefined,
+  __autocashGtagJsLoaded: undefined,
   setTimeout: globalThis.setTimeout.bind(globalThis),
   clearTimeout: globalThis.clearTimeout.bind(globalThis),
   sessionStorage: storage,
+  performance: globalThis.performance,
 }
 
 ;(globalThis as unknown as { window: typeof fakeWindow }).window = fakeWindow
 ;(globalThis as unknown as { sessionStorage: MemoryStorage }).sessionStorage = storage
+;(globalThis as unknown as { document: { getElementsByTagName: (tag: string) => { length: number } } }).document =
+  {
+    getElementsByTagName: () => ({ length: 0 }),
+  }
 
 function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(message)
@@ -85,6 +97,8 @@ async function main() {
   assert(gaSrc.includes("shouldLoadDirectGaSnippet"), "GoogleAnalytics must still gate on measurement id")
   assert(gaSrc.includes("googletagmanager.com/gtag/js?id="), "GoogleAnalytics must load gtag.js")
   assert(gaSrc.includes("directGaConfigSnippet"), "GoogleAnalytics must use the shared config helper")
+  assert(gaSrc.includes("onLoad={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js load")
+  assert(gaSrc.includes("onReady={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js ready")
   assert(
     shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ") === true,
     "GoogleAnalytics must load gtag.js even when GTM is set",
@@ -109,10 +123,13 @@ async function main() {
     QR_LETAK_PENDING,
     QR_LETAK_SENT,
     QR_LETAK_STORAGE_KEY,
+    QR_REDIRECT_HOLD_MS,
     handoffQrLetakScan,
     hasPendingQrLetak,
     isAnalyticsReady,
+    isGtagJsLoaded,
     isGtagReady,
+    markGtagJsLoaded,
     markQrLetakPending,
     replayPendingQrLetak,
     trackQrLetak,
@@ -123,13 +140,32 @@ async function main() {
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
 
   fakeWindow.gtag = gtagMock
-  assert(isGtagReady(), "gtag function should count as gtag-ready")
-  assert(isAnalyticsReady(), "GA measurement id must not require GTM to be ready")
+  fakeWindow.__autocashGtagJsLoaded = undefined
+  assert(isGtagReady(), "inline stub should count as gtag-ready")
+  assert(!isGtagJsLoaded(), "stub must not count as gtag.js loaded")
+  assert(!isAnalyticsReady(), "GA measurement id must wait for executed gtag.js, not the stub")
 
-  const adsOnly = await waitForAnalytics(150)
-  assert(adsOnly, "waitForAnalytics must resolve on window.gtag when GA id is set")
+  const stubOnly = await waitForAnalytics(150)
+  assert(!stubOnly, "waitForAnalytics must not resolve on the inline stub")
 
   markQrLetakPending()
+  await new Promise<void>((resolve) => {
+    trackQrLetak({ onDone: () => resolve() })
+  })
+  assert(gtagCalls.length === 0, "must not call gtag while only the inline stub exists")
+  assert(!dataLayerHasQrCustomEvent(), "stub-only miss must not push a Custom Event")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "stub-only miss keeps pending")
+
+  fakeWindow.google_tag_manager = { "GTM-TEST": {} }
+  const gtmStub = await waitForAnalytics(150)
+  assert(!gtmStub, "GTM plus stub must not count as ready when GA id is set")
+  fakeWindow.google_tag_manager = undefined
+
+  markGtagJsLoaded()
+  assert(isGtagJsLoaded(), "markGtagJsLoaded must flip the collector flag")
+  assert(isAnalyticsReady(), "gtag function + gtag.js loaded must be ready without GTM")
+
+  gtagCalls.length = 0
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
   })
@@ -146,12 +182,14 @@ async function main() {
   const qrCall = gtagCalls[qrIndex]
   assert(qrCall, "must call gtag('event', 'qr_letak')")
   assert(eventParams(qrCall)?.send_to === "G-DXBBY6TFGG", "gtag event must send_to the GA4 id")
+  assert(eventParams(qrCall)?.event_timeout === undefined, "must not set event_timeout that fakes a callback")
   assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "successful gtag handoff marks sent")
   assert(!hasPendingQrLetak(), "pending must clear after gtag handoff")
 
   fakeWindow.gtag = undefined
   fakeWindow.google_tag_manager = { "GTM-TEST": {} }
+  fakeWindow.__autocashGtagJsLoaded = undefined
   dataLayer.length = 0
   gtagCalls.length = 0
   assert(!isGtagReady(), "GTM object alone must not count as gtag-ready")
@@ -181,15 +219,40 @@ async function main() {
   assert(gtagCalls.length === 0, "homepage replay after timeout must not mark sent without gtag")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "homepage timeout keeps pending")
 
+  fakeWindow.gtag = gtagStubNoCallback
+  fakeWindow.__autocashGtagJsLoaded = true
+  gtagCalls.length = 0
+  markQrLetakPending()
+  let holdDone = false
+  await new Promise<void>((resolve) => {
+    const started = Date.now()
+    trackQrLetak({
+      onDone: () => {
+        holdDone = true
+        resolve()
+      },
+    })
+    setTimeout(() => {
+      if (!holdDone) resolve()
+    }, QR_REDIRECT_HOLD_MS + 200)
+    void started
+  })
+  assert(holdDone, "redirect hold must still finish when event_callback never runs")
+  assert(
+    gtagCalls.some((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK),
+    "hold path must still invoke gtag('event', 'qr_letak')",
+  )
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "timeout without callback keeps pending")
+
   fakeWindow.gtag = gtagMock
   gtagCalls.length = 0
   await handoffQrLetakScan(undefined, 200)
   assert(
     gtagCalls.some((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK),
-    "handoff must fire qr_letak once gtag exists, without waiting for GTM",
+    "handoff must fire qr_letak once gtag.js has loaded, without waiting for GTM",
   )
   assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
-  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "gtag handoff without GTM marks sent")
+  assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "gtag.js callback marks sent")
 
   console.log("ok")
 }
