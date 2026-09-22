@@ -44,7 +44,7 @@ const fakeWindow: {
   setTimeout: typeof setTimeout
   clearTimeout: typeof clearTimeout
   sessionStorage: MemoryStorage
-  performance: typeof performance
+  performance: { getEntriesByType: (type: string) => PerformanceResourceTiming[] } | typeof performance
 } = {
   gtag: undefined,
   dataLayer,
@@ -53,7 +53,9 @@ const fakeWindow: {
   setTimeout: globalThis.setTimeout.bind(globalThis),
   clearTimeout: globalThis.clearTimeout.bind(globalThis),
   sessionStorage: storage,
-  performance: globalThis.performance,
+  performance: {
+    getEntriesByType: () => [],
+  },
 }
 
 ;(globalThis as unknown as { window: typeof fakeWindow }).window = fakeWindow
@@ -99,6 +101,11 @@ async function main() {
   assert(gaSrc.includes("directGaConfigSnippet"), "GoogleAnalytics must use the shared config helper")
   assert(gaSrc.includes("onLoad={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js load")
   assert(gaSrc.includes("onReady={markGtagJsLoaded}"), "GoogleAnalytics must mark gtag.js ready")
+  assert(gaSrc.includes("typeof window.gtag !== 'function'"), "inline snippet must not overwrite a live gtag")
+  assert(
+    gaSrc.indexOf('id="google-analytics"') < gaSrc.indexOf("googletagmanager.com/gtag/js?id="),
+    "stub snippet must be injected before gtag.js so a cached library is not overwritten",
+  )
   assert(
     shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "GTM-P6VZJXTQ") === true,
     "GoogleAnalytics must load gtag.js even when GTM is set",
@@ -128,6 +135,7 @@ async function main() {
     hasPendingQrLetak,
     isAnalyticsReady,
     isGtagJsLoaded,
+    isGtagJsScriptUrl,
     isGtagReady,
     markGtagJsLoaded,
     markQrLetakPending,
@@ -138,6 +146,31 @@ async function main() {
 
   assert(QR_ANALYTICS_READY_TIMEOUT_MS === 8000, "/qr wait must be 8s like the homepage beacon")
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
+
+  const gtmUrl = "https://www.googletagmanager.com/gtm.js?id=GTM-P6VZJXTQ"
+  const gtagUrl = "https://www.googletagmanager.com/gtag/js?id=G-DXBBY6TFGG"
+  assert(!isGtagJsScriptUrl(gtmUrl, "G-DXBBY6TFGG"), "gtm.js must not count as gtag.js")
+  assert(!isGtagJsScriptUrl("https://www.googletagmanager.com/gta", "G-DXBBY6TFGG"), "gta prefix must not count as gtag.js")
+  assert(isGtagJsScriptUrl(gtagUrl, "G-DXBBY6TFGG"), "gtag/js?id=G- must count as gtag.js")
+
+  fakeWindow.performance = {
+    getEntriesByType: (type: string) =>
+      type === "resource"
+        ? [{ name: gtmUrl, initiatorType: "script", responseEnd: 42 } as PerformanceResourceTiming]
+        : [],
+  }
+  fakeWindow.__autocashGtagJsLoaded = undefined
+  fakeWindow.gtag = gtagMock
+  assert(!isGtagJsLoaded(), "gtm.js performance entry must not flip gtag.js loaded")
+  fakeWindow.performance = {
+    getEntriesByType: (type: string) =>
+      type === "resource"
+        ? [{ name: gtagUrl, initiatorType: "script", responseEnd: 0 } as PerformanceResourceTiming]
+        : [],
+  }
+  assert(isGtagJsLoaded(), "gtag/js?id=G- performance script entry must count as loaded")
+  fakeWindow.performance = { getEntriesByType: () => [] }
+  fakeWindow.__autocashGtagJsLoaded = undefined
 
   fakeWindow.gtag = gtagMock
   fakeWindow.__autocashGtagJsLoaded = undefined
