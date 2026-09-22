@@ -82,6 +82,12 @@ export function qrGtagDocument(options: {
       }, location.origin === "null" ? "*" : location.origin);
     } catch (e) {}
   }
+  gtag("consent", "default", {
+    analytics_storage: "granted",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied"
+  });
   gtag("js", new Date());
   gtag("config", payload.measurementId, { send_page_view: false });
   gtag("set", {
