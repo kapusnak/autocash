@@ -15,6 +15,7 @@ import {
   hasPendingQrLetak,
   isAnalyticsReady,
   isGtagJsLoaded,
+  isGtagJsScriptUrl,
   isGtagReady,
   markGtagJsLoaded,
   markQrLetakPending,
@@ -43,16 +44,20 @@ function mockSessionStorage() {
   }
 }
 
+type ResourceEntry = { name: string; initiatorType: string; responseEnd?: number }
+
 function installWindow(
   gtag?: (...args: GtagCall) => void,
   extras?: {
     googleTagManager?: object
     dataLayer?: unknown[]
     gtagJsLoaded?: boolean
+    resourceEntries?: ResourceEntry[]
     document?: { getElementsByTagName: (tag: string) => { length: number } }
   },
 ) {
   const sessionStorage = mockSessionStorage()
+  const resourceEntries = extras?.resourceEntries ?? []
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
@@ -63,7 +68,9 @@ function installWindow(
       setTimeout: globalThis.setTimeout.bind(globalThis),
       clearTimeout: globalThis.clearTimeout.bind(globalThis),
       sessionStorage,
-      performance: globalThis.performance,
+      performance: {
+        getEntriesByType: (type: string) => (type === "resource" ? resourceEntries : []),
+      },
     },
   })
   Object.defineProperty(globalThis, "sessionStorage", {
@@ -338,6 +345,42 @@ test("markGtagJsLoaded flips collector ready", () => {
   assert.equal(isAnalyticsReady(), true)
 })
 
+test("gtm.js must not count as gtag.js loaded; gtag/js?id=G- must", () => {
+  const gtmUrl = "https://www.googletagmanager.com/gtm.js?id=GTM-P6VZJXTQ"
+  const gtagUrl = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+  const adsUrl = "https://www.googletagmanager.com/gtag/js?id=AW-17721640948"
+  const prefixOnly = "https://www.googletagmanager.com/gta"
+
+  assert.equal(isGtagJsScriptUrl(gtmUrl, GA_ID), false)
+  assert.equal(isGtagJsScriptUrl(gtmUrl), false)
+  assert.equal(isGtagJsScriptUrl(prefixOnly, GA_ID), false)
+  assert.equal(isGtagJsScriptUrl(adsUrl, GA_ID), false)
+  assert.equal(isGtagJsScriptUrl(gtagUrl, GA_ID), true)
+  assert.equal(gtmUrl.includes("/gtag/js"), false)
+
+  installWindow(() => {}, {
+    resourceEntries: [{ name: gtmUrl, initiatorType: "script", responseEnd: 42 }],
+  })
+  assert.equal(isGtagJsLoaded(), false)
+  assert.equal(isAnalyticsReady(), false)
+
+  installWindow(() => {}, {
+    resourceEntries: [{ name: gtagUrl, initiatorType: "link", responseEnd: 42 }],
+  })
+  assert.equal(isGtagJsLoaded(), false)
+
+  installWindow(() => {}, {
+    resourceEntries: [{ name: adsUrl, initiatorType: "script", responseEnd: 42 }],
+  })
+  assert.equal(isGtagJsLoaded(), false)
+
+  installWindow(() => {}, {
+    resourceEntries: [{ name: gtagUrl, initiatorType: "script", responseEnd: 0 }],
+  })
+  assert.equal(isGtagJsLoaded(), true)
+  assert.equal(isAnalyticsReady(), true)
+})
+
 test("replayPendingQrLetak attempts track even if the wait timed out", async () => {
   const calls: GtagCall[] = []
   const storage = installWindow()
@@ -402,6 +445,10 @@ test("GoogleAnalytics component loads gtag.js with GTM, suppresses page_view, an
   assert.match(gaSrc, /directGaConfigSnippet/)
   assert.match(gaSrc, /onLoad=\{markGtagJsLoaded\}/)
   assert.match(gaSrc, /onReady=\{markGtagJsLoaded\}/)
+  assert.match(gaSrc, /typeof window\.gtag !== 'function'/)
+  const stubIndex = gaSrc.indexOf('id="google-analytics"')
+  const srcIndex = gaSrc.indexOf("googletagmanager.com/gtag/js?id=")
+  assert.ok(stubIndex >= 0 && srcIndex > stubIndex)
   assert.equal(shouldLoadDirectGaSnippet(GA_ID, "GTM-P6VZJXTQ"), true)
   assert.match(
     readFileSync(fileURLToPath(new URL("./direct-ga-snippet.ts", import.meta.url)), "utf8"),

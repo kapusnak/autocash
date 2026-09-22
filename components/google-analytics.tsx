@@ -17,20 +17,22 @@ export function GoogleAnalytics() {
 
   return (
     <>
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          if (typeof window.gtag !== 'function') {
+            window.gtag = function gtag(){dataLayer.push(arguments);}
+          }
+          gtag('js', new Date());
+          ${configCall}
+        `}
+      </Script>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="afterInteractive"
         onLoad={markGtagJsLoaded}
         onReady={markGtagJsLoaded}
       />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          ${configCall}
-        `}
-      </Script>
     </>
   )
 }

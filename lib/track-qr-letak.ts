@@ -79,27 +79,47 @@ export function markGtagJsLoaded(): void {
 }
 
 /**
- * True when this page's `gtag/js` has downloaded as a real script (not a
- * `<link rel="preload">`) or Next.js Script reported load.
- * The inline `function gtag(){dataLayer.push(arguments)}` is not enough.
+ * True only for the GA measurement `gtag/js` library URL.
+ * Require `/gtag/js` — a shorter `…/gta` / `…/gt` prefix also matches GTM
+ * `gtm.js` (`googletagmanager.com/gtm.js`) and must not count as loaded.
  */
-export function isGtagJsLoaded(): boolean {
-  if (typeof window === "undefined") return false
-  if (window.__autocashGtagJsLoaded) return true
+export function isGtagJsScriptUrl(
+  url: string | undefined | null,
+  measurementId?: string,
+): boolean {
+  if (!url) return false
+  if (!url.includes("/gtag/js")) return false
+  if (url.includes("/gtm.js")) return false
+  const id = measurementId?.trim()
+  if (id && !url.includes(id)) return false
+  return true
+}
 
+function hasMeasurementGtagJsResource(): boolean {
   try {
     const id = gaMeasurementId()
-    const entries = performance.getEntriesByType("resource")
+    const entries = window.performance?.getEntriesByType?.("resource") ?? []
     return entries.some((entry) => {
       const resource = entry as PerformanceResourceTiming
       if (resource.initiatorType !== "script") return false
-      if (!resource.name.includes("googletagmanager.com/gtag/js")) return false
-      if (id && !resource.name.includes(id)) return false
-      return resource.responseEnd > 0
+      return isGtagJsScriptUrl(resource.name, id)
     })
   } catch {
     return false
   }
+}
+
+/**
+ * True when this page's measurement `gtag/js` has downloaded as a real
+ * script (not a `<link rel="preload">`, not `gtm.js`) or Next.js Script
+ * reported load. The inline `function gtag(){dataLayer.push(arguments)}`
+ * is not enough.
+ */
+export function isGtagJsLoaded(): boolean {
+  if (typeof window === "undefined") return false
+  watchGtagJsScriptLoad()
+  if (window.__autocashGtagJsLoaded) return true
+  return hasMeasurementGtagJsResource()
 }
 
 /**
@@ -165,8 +185,7 @@ function watchGtagJsScriptLoad(): void {
   for (let i = 0; i < scripts.length; i++) {
     const el = scripts[i]
     const src = el.src || ""
-    if (!src.includes("googletagmanager.com/gtag/js")) continue
-    if (id && !src.includes(id)) continue
+    if (!isGtagJsScriptUrl(src, id)) continue
     if (el.dataset.autocashGtagWatch === "1") continue
     el.dataset.autocashGtagWatch = "1"
     el.addEventListener("load", markGtagJsLoaded)
