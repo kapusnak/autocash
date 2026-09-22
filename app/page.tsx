@@ -81,7 +81,8 @@ export default function Home() {
           <div className="max-w-2xl mx-auto text-center mb-12">
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Jak to probíhá</h2>
             <p className="mt-3 text-muted-foreground">
-              Od poptávky k penězům na účtu. Bez žádosti v bance a bez týdnů čekání.
+              Od poptávky k penězům na účtu. Bez žádosti v bance. Po odeslání vám přijde e-mail s odkazem — auto
+              vyfotíte v mobilu, nic instalovat nemusíte.
             </p>
           </div>
           <div className="max-w-5xl mx-auto">
