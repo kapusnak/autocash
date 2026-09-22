@@ -73,9 +73,9 @@ export default function RootLayout({
       <body className={`${plusJakarta.variable} ${dmSans.variable} font-sans antialiased`}>
         <GoogleTagManager />
         <GoogleAdsGtag />
+        <GoogleAnalytics />
         <FormularHashScroll />
         {children}
-        <GoogleAnalytics />
         <SeznamRetargeting />
         <AppToaster />
       </body>
