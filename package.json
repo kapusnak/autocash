@@ -10,7 +10,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start -p ${PORT:-3000}",
-    "test": "node --experimental-strip-types --test lib/direct-ga-snippet.test.ts lib/qr-gtag-document.test.ts lib/track-qr-letak.test.ts && npx tsx --test lib/rate-limit.test.ts lib/photo-share.test.ts lib/photo-share-upload.test.ts lib/photo-files.test.ts lib/photo-slots.test.ts && npx tsx scripts/check-track-qr-letak.ts && npx tsx scripts/check-crawler-user-agent.ts && npx tsx scripts/check-lead-email-subject.ts"
+    "test": "node --experimental-strip-types --test lib/direct-ga-snippet.test.ts lib/qr-gtag-document.test.ts lib/track-qr-letak.test.ts && npx tsx --test lib/rate-limit.test.ts lib/photo-share.test.ts lib/photo-share-upload.test.ts lib/photo-files.test.ts lib/photo-slots.test.ts && npx tsx scripts/check-track-qr-letak.ts && npx tsx scripts/check-crawler-user-agent.ts && npx tsx scripts/check-lead-email-subject.ts && npx tsx scripts/check-hero-assets.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -26,6 +26,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.60.0",
+    "sharp": "^0.35.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "zod": "3.25.76"

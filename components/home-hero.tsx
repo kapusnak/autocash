@@ -1,7 +1,49 @@
 import { ArrowDown, Car, Clock, MapPin, Shield } from "lucide-react"
-import Image from "next/image"
+import { getImageProps } from "next/image"
 
 import { LoanCalculator } from "@/components/loan-calculator"
+
+const HERO_ALT = "Auto připravené k ocenění"
+const HERO_QUALITY = 85
+/** Full-bleed photo on mobile; left column of the split hero on desktop (form is ~26.5rem). */
+const HERO_DESKTOP_SIZES = "(max-width: 1023px) 100vw, min(58vw, 56rem)"
+const HERO_MOBILE_SIZES = "100vw"
+
+function HeroPhoto() {
+  const {
+    props: { srcSet: mobileSrcSet },
+  } = getImageProps({
+    src: "/hero-car-sm.webp",
+    alt: HERO_ALT,
+    fill: true,
+    priority: true,
+    quality: HERO_QUALITY,
+    sizes: HERO_MOBILE_SIZES,
+  })
+  const {
+    props: { srcSet: desktopSrcSet, ...img },
+  } = getImageProps({
+    src: "/hero-car.webp",
+    alt: HERO_ALT,
+    fill: true,
+    priority: true,
+    quality: HERO_QUALITY,
+    sizes: HERO_DESKTOP_SIZES,
+  })
+
+  return (
+    <picture className="absolute inset-0 block">
+      <source media="(max-width: 767px)" srcSet={mobileSrcSet} sizes={HERO_MOBILE_SIZES} />
+      <source media="(min-width: 768px)" srcSet={desktopSrcSet} sizes={HERO_DESKTOP_SIZES} />
+      <img
+        {...img}
+        alt={HERO_ALT}
+        srcSet={desktopSrcSet}
+        className="absolute inset-0 h-full w-full object-cover object-[52%_58%] sm:object-[54%_52%] lg:object-[46%_50%]"
+      />
+    </picture>
+  )
+}
 
 const chips = [
   { icon: Clock, label: "Peníze do 24 hodin" },
@@ -16,17 +58,7 @@ export function HomeHero() {
       <div className="container mx-auto px-4 pt-24 pb-8 sm:pt-28 sm:pb-10 lg:pt-28 lg:pb-12">
         <div className="overflow-hidden rounded-2xl bg-card shadow-xl sm:rounded-3xl lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(22.5rem,26.5rem)] lg:items-stretch">
           <div className="relative isolate min-h-[22rem] overflow-hidden sm:min-h-[26rem] lg:min-h-full">
-            <picture className="absolute inset-0 block">
-              <source media="(max-width: 767px)" srcSet="/hero-car-sm.webp" type="image/webp" />
-              <Image
-                src="/hero-car.webp"
-                alt="Auto připravené k ocenění"
-                fill
-                priority
-                sizes="(max-width: 1023px) 100vw, 65vw"
-                className="object-cover object-[52%_58%] sm:object-[54%_52%] lg:object-[46%_50%]"
-              />
-            </picture>
+            <HeroPhoto />
 
             {/* Contrast only where copy sits — the SUV stays saturated. */}
             <div
