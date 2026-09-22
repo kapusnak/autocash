@@ -5,9 +5,10 @@ import { fileURLToPath } from "node:url"
 import {
   GA_EVENT_QR_LETAK,
   QR_ANALYTICS_READY_TIMEOUT_MS,
+  QR_COLLECT_FLUSH_MS,
+  QR_GTAG_COLLECT_PATH,
   QR_GTAG_MESSAGE_SOURCE,
   QR_HOME_BEACON_WAIT_MS,
-  QR_LETAK_CAMPAIGN,
   QR_LETAK_PENDING,
   QR_LETAK_SENT,
   QR_LETAK_STORAGE_KEY,
@@ -28,6 +29,7 @@ const ORIGIN = "https://autocash.cz"
 
 type IframeMock = {
   tagName: string
+  src: string
   srcdoc: string
   style: { cssText: string }
   setAttribute: (name: string, value: string) => void
@@ -88,6 +90,7 @@ function installWindow() {
     createElement(tag: string) {
       const el: IframeMock = {
         tagName: tag,
+        src: "",
         srcdoc: "",
         style: { cssText: "" },
         attrs: {},
@@ -156,6 +159,11 @@ function installWindow() {
       assert.ok(hold, "expected iframe hold timer")
       hold.fn()
     },
+    flushCollect() {
+      const flush = timeouts.find((item) => item.ms === QR_COLLECT_FLUSH_MS)
+      assert.ok(flush, "expected collect flush timer")
+      flush.fn()
+    },
   }
 }
 
@@ -175,24 +183,26 @@ test("/qr iframe wait is 8s like the homepage beacon", () => {
   assert.equal(QR_ANALYTICS_READY_TIMEOUT_MS, 8000)
   assert.equal(QR_HOME_BEACON_WAIT_MS, 8000)
   assert.equal(QR_REDIRECT_HOLD_MS, 8000)
+  assert.equal(QR_COLLECT_FLUSH_MS, 800)
+  assert.equal(QR_GTAG_COLLECT_PATH, "/qr-gtag")
 })
 
-test("trackQrLetak embeds GTM-free collector HTML and marks sent only on callback", async () => {
+test("trackQrLetak loads /qr-gtag iframe, keeps it after callback, then flushes", async () => {
   const env = installWindow()
   markQrLetakPending()
 
+  let done = false
   const finished = new Promise<void>((resolve) => {
-    trackQrLetak({ onDone: () => resolve() })
+    trackQrLetak({
+      onDone: () => {
+        done = true
+        resolve()
+      },
+    })
   })
 
   assert.equal(env.iframes.length, 1)
-  const html = env.iframes[0]?.srcdoc ?? ""
-  assert.ok(html.includes(`gtag/js?id=${GA_ID}`))
-  assert.equal(html.includes("autocashGaDl"), false)
-  assert.equal(html.includes("GTM-"), false)
-  assert.equal(html.includes("AW-"), false)
-  assert.ok(html.includes(`"${GA_EVENT_QR_LETAK}"`))
-  assert.ok(html.indexOf("function gtag()") < html.indexOf("gtag/js?id="))
+  assert.equal(env.iframes[0]?.src, QR_GTAG_COLLECT_PATH)
   assert.equal(dataLayerHasQrCustomEvent(env.dataLayer), false)
   assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
 
@@ -201,12 +211,16 @@ test("trackQrLetak embeds GTM-free collector HTML and marks sent only on callbac
     event: GA_EVENT_QR_LETAK,
     sent: true,
   })
-  await finished
-
   assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
+  assert.equal(done, false)
+  assert.equal(env.iframes[0]?.parentNode !== null, true)
+
+  env.flushCollect()
+  await finished
+  assert.equal(done, true)
   assert.equal(hasPendingQrLetak(), false)
   assert.equal(dataLayerHasQrCustomEvent(env.dataLayer), false)
-  assert.equal(env.iframes[0]?.parentNode, null)
+  assert.ok(env.iframes[0]?.parentNode, "must not iframe.remove() before redirect")
 })
 
 test("trackQrLetak without a measurement id does not mark the scan sent", async () => {
@@ -236,7 +250,7 @@ test("hold without event_callback keeps pending so homepage can retry", async ()
 
   assert.equal(done, false)
   assert.equal(env.iframes.length, 1)
-  assert.ok((env.iframes[0]?.srcdoc ?? "").includes(GA_EVENT_QR_LETAK))
+  assert.equal(env.iframes[0]?.src, QR_GTAG_COLLECT_PATH)
 
   env.flushHold()
   assert.equal(done, true)
@@ -284,12 +298,11 @@ test("handoffQrLetakScan fires the iframe collector and does not use window.gtag
   const handoff = handoffQrLetakScan()
   assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
   assert.equal(env.iframes.length, 1)
-  const html = env.iframes[0]?.srcdoc ?? ""
-  assert.ok(html.includes("send_to"))
-  assert.ok(html.includes(QR_LETAK_CAMPAIGN.campaign_source))
+  assert.equal(env.iframes[0]?.src, QR_GTAG_COLLECT_PATH)
   assert.equal(gtagCalls.length, 0)
 
   env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  env.flushCollect()
   await handoff
   assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
   assert.equal(gtagCalls.length, 0)
@@ -305,6 +318,7 @@ test("replayPendingQrLetak no-ops without pending and retries via iframe when pe
   replayPendingQrLetak()
   assert.equal(env.iframes.length, 1)
   env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  env.flushCollect()
   assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
 })
 
@@ -331,4 +345,13 @@ test("qr redirect still skips bots and webdriver in the landing component", () =
   assert.match(src, /isCrawlerUserAgent/)
   assert.match(src, /navigator\.webdriver/)
   assert.match(src, /handoffQrLetakScan/)
+})
+
+test("fire path loads /qr-gtag, does not srcdoc, and does not iframe.remove", () => {
+  const src = readFileSync(fileURLToPath(new URL("./track-qr-letak.ts", import.meta.url)), "utf8")
+  assert.match(src, /QR_GTAG_COLLECT_PATH/)
+  assert.match(src, /iframe\.src = QR_GTAG_COLLECT_PATH/)
+  assert.match(src, /QR_COLLECT_FLUSH_MS/)
+  assert.equal(src.includes(".srcdoc"), false)
+  assert.equal(src.includes(".remove("), false)
 })

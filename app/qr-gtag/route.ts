@@ -6,7 +6,7 @@ import { isGaMeasurementId, qrGtagDocument } from "@/lib/qr-gtag-document"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-/** Inspectable GTM-free collector HTML. `/qr` embeds the same document via srcdoc. */
+/** Inspectable GTM-free collector HTML. `/qr` loads this route in a hidden iframe. */
 export function GET() {
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? ""
   if (!isGaMeasurementId(measurementId)) {

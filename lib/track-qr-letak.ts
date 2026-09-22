@@ -2,7 +2,6 @@ import {
   gaGtagJsSrc,
   isGaMeasurementId,
   isQrGtagMessage,
-  qrGtagDocument,
   QR_GTAG_MESSAGE_SOURCE,
 } from "./qr-gtag-document.ts"
 
@@ -29,6 +28,10 @@ export const QR_ANALYTICS_READY_TIMEOUT_MS = 8000
 export const QR_HOME_BEACON_WAIT_MS = 8000
 /** Alias used by tests: redirect hold is the iframe callback wait. */
 export const QR_REDIRECT_HOLD_MS = QR_ANALYTICS_READY_TIMEOUT_MS
+/** Keep the collector iframe alive after event_callback so collect can leave. */
+export const QR_COLLECT_FLUSH_MS = 800
+/** Same-origin GTM-free collector. Live `/qr-gtag` already emits `en=qr_letak`. */
+export const QR_GTAG_COLLECT_PATH = "/qr-gtag"
 
 type TrackQrLetakOptions = {
   onDone?: () => void
@@ -44,14 +47,6 @@ function finishOnce(fn: (() => void) | undefined): () => void {
     if (done) return
     done = true
     fn?.()
-  }
-}
-
-function gtagCampaign(): { source: string; medium: string; name: string } {
-  return {
-    source: QR_LETAK_CAMPAIGN.campaign_source,
-    medium: QR_LETAK_CAMPAIGN.campaign_medium,
-    name: QR_LETAK_CAMPAIGN.campaign_name,
   }
 }
 
@@ -89,14 +84,14 @@ export function clearQrLetakFlag(): void {
 }
 
 /**
- * Fires exactly one `qr_letak` from a GTM-free `srcdoc` iframe whose HTML
- * queues `gtag('js')` / `config` / `event` **before** `gtag/js` — the official
- * order. Never `dataLayer.push({ event: 'qr_letak' })` on the parent (GTM tag
- * `GA4 - qr_letak` stays paused). Autocash has no Ads `AW-` collector.
+ * Fires exactly one `qr_letak` from `/qr-gtag` in a hidden iframe (GTM-free
+ * document; official gtag order). Never `dataLayer.push({ event: 'qr_letak' })`
+ * on the parent. Autocash has no Ads `AW-` collector.
  *
- * Marks the session flag sent **only** when the iframe reports `sent: true`
- * (`event_callback`). Redirect `onDone` still runs on timeout so `/qr` is not
- * stuck; pending stays so the homepage beacon can retry.
+ * Live after #22: `/qr-gtag` as a top-level page emits `en=qr_letak`, but `/qr`
+ * marked sessionStorage `sent` and redirected immediately, then tearing down
+ * the iframe aborted the collect. Keep the iframe in the DOM and delay `onDone`
+ * after callback so the hit can leave. Timeout without callback keeps pending.
  */
 export function trackQrLetak(options?: TrackQrLetakOptions): void {
   if (typeof window === "undefined" || typeof document === "undefined") {
@@ -111,11 +106,6 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     return
   }
 
-  const acknowledge = finishOnce(() => {
-    markQrLetakSent()
-    done()
-  })
-
   const iframe = document.createElement("iframe")
   iframe.setAttribute("aria-hidden", "true")
   iframe.setAttribute("title", "")
@@ -123,14 +113,9 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     "position:absolute;width:0;height:0;border:0;overflow:hidden;visibility:hidden"
 
   let timer = 0
-  const cleanup = finishOnce(() => {
+  const stopListening = finishOnce(() => {
     window.removeEventListener("message", onMessage)
     window.clearTimeout(timer)
-    try {
-      iframe.remove()
-    } catch {
-      iframe.parentNode?.removeChild(iframe)
-    }
   })
 
   const onMessage = (event: MessageEvent) => {
@@ -138,27 +123,26 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     if (origin && event.origin && event.origin !== origin) return
     if (!isQrGtagMessage(event.data)) return
     if (event.data.event !== GA_EVENT_QR_LETAK) return
-    cleanup()
-    if (event.data.sent) acknowledge()
-    else done()
+    stopListening()
+    if (event.data.sent) {
+      markQrLetakSent()
+      timer = window.setTimeout(done, QR_COLLECT_FLUSH_MS)
+      return
+    }
+    done()
   }
 
   timer = window.setTimeout(() => {
-    cleanup()
+    stopListening()
     done()
   }, QR_REDIRECT_HOLD_MS)
 
   window.addEventListener("message", onMessage)
-  iframe.srcdoc = qrGtagDocument({
-    measurementId,
-    eventName: GA_EVENT_QR_LETAK,
-    campaign: gtagCampaign(),
-    callbackTimeoutMs: QR_REDIRECT_HOLD_MS,
-  })
+  iframe.src = QR_GTAG_COLLECT_PATH
 
   const host = document.body ?? document.documentElement
   if (!host) {
-    cleanup()
+    stopListening()
     done()
     return
   }

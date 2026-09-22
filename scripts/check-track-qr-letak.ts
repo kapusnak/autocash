@@ -21,7 +21,7 @@ class MemoryStorage {
 
 const storage = new MemoryStorage()
 const dataLayer: unknown[] = []
-const iframes: Array<{ srcdoc: string; parentNode: unknown; remove: () => void }> = []
+const iframes: Array<{ src: string; srcdoc: string; parentNode: unknown; remove: () => void }> = []
 const messageListeners: Array<(event: { origin: string; data: unknown }) => void> = []
 const timeouts: Array<{ id: number; fn: () => void; ms: number }> = []
 let nextTimer = 1
@@ -47,6 +47,7 @@ const fakeDocument = {
   createElement(tag: string) {
     if (tag !== "iframe") throw new Error(`unexpected element ${tag}`)
     const el = {
+      src: "",
       srcdoc: "",
       style: { cssText: "" },
       parentNode: null as unknown,
@@ -131,9 +132,19 @@ async function main() {
   assert(shouldLoadDirectGaSnippet("G-DXBBY6TFGG", "") === true, "GA-only deploys may still load gtag.js")
   assert(shouldLoadDirectGaSnippet("", "GTM-P6VZJXTQ") === false, "no-op without a measurement id")
 
+  const trackSrc = readFileSync(
+    fileURLToPath(new URL("../lib/track-qr-letak.ts", import.meta.url)),
+    "utf8",
+  )
+  assert(trackSrc.includes("iframe.src = QR_GTAG_COLLECT_PATH"), "iframe must navigate to /qr-gtag")
+  assert(!trackSrc.includes(".srcdoc"), "must not use srcdoc (about:srcdoc never hit collect)")
+  assert(!trackSrc.includes(".remove("), "must not tear down the iframe before collect leaves")
+
   const {
     GA_EVENT_QR_LETAK,
     QR_ANALYTICS_READY_TIMEOUT_MS,
+    QR_COLLECT_FLUSH_MS,
+    QR_GTAG_COLLECT_PATH,
     QR_GTAG_MESSAGE_SOURCE,
     QR_HOME_BEACON_WAIT_MS,
     QR_LETAK_PENDING,
@@ -152,7 +163,9 @@ async function main() {
   assert(QR_ANALYTICS_READY_TIMEOUT_MS === 8000, "/qr wait must be 8s")
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
   assert(QR_REDIRECT_HOLD_MS === 8000, "iframe callback wait must be 8s")
-  assert(!gaGtagJsSrc("G-DXBBY6TFGG").includes("l="), "collector gtag.js must use the default dataLayer")
+  assert(QR_COLLECT_FLUSH_MS === 800, "must delay redirect after callback so collect can leave")
+  assert(QR_GTAG_COLLECT_PATH === "/qr-gtag", "iframe must load the GTM-free collector route")
+  assert(!new URL(gaGtagJsSrc("G-DXBBY6TFGG")).searchParams.has("l"), "collector gtag.js must use the default dataLayer")
 
   const html = qrGtagDocument({
     measurementId: "G-DXBBY6TFGG",
@@ -161,6 +174,7 @@ async function main() {
     callbackTimeoutMs: 8000,
   })
   assert(html.indexOf("function gtag()") < html.indexOf("gtag/js?id=G-DXBBY6TFGG"), "stub must queue before gtag/js")
+  assert(html.includes('gtag("consent", "default"'), "collector must set consent so hits use google-analytics collect")
   assert(html.includes('gtag("js", new Date())'), "must set the official js timestamp")
   assert(html.includes('gtag("event", payload.eventName'), "must gtag event qr_letak")
   assert(html.includes("send_to"), "event must send_to the GA4 id")
@@ -176,7 +190,7 @@ async function main() {
     },
   })
   assert(iframes.length === 1, "must create the collector iframe")
-  assert(iframes[0]!.srcdoc.includes("qr_letak"), "iframe srcdoc must include qr_letak")
+  assert(iframes[0]!.src === QR_GTAG_COLLECT_PATH, "iframe must load /qr-gtag")
   assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_PENDING, "must not mark sent before callback")
 
@@ -192,6 +206,9 @@ async function main() {
   await new Promise<void>((resolve) => {
     const pending = handoffQrLetakScan(() => resolve())
     dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+    const flush = timeouts.find((item) => item.ms === QR_COLLECT_FLUSH_MS)
+    assert(flush, "callback must schedule a collect flush before redirect")
+    flush.fn()
     void pending
   })
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "callback marks sent")
@@ -203,6 +220,9 @@ async function main() {
   replayPendingQrLetak()
   assert(iframes.length === 1, "homepage replay must create the collector iframe")
   dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  const replayFlush = timeouts.find((item) => item.ms === QR_COLLECT_FLUSH_MS)
+  assert(replayFlush, "homepage replay must flush collect before considering done")
+  replayFlush.fn()
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "homepage callback marks sent")
 
   console.log("ok")
