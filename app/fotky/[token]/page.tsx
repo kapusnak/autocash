@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 import { Header } from "@/components/header"
-import { PhotoWizard } from "@/components/photo-wizard"
+import { PhotoWizardWithIntro } from "@/components/photo-wizard-intro"
 import { isPhotoWizardShareToken } from "@/lib/photo-share"
 import { verifyPhotoToken } from "@/lib/photo-token"
 
@@ -49,9 +49,9 @@ export default async function FotkyPage({ params }: { params: Promise<{ token: s
       <section className="pt-28 pb-16 px-4">
         <div className="mx-auto flex justify-center">
           {payload ? (
-            <PhotoWizard token={token} code={payload.code} name={payload.name} />
+            <PhotoWizardWithIntro token={token} code={payload.code} name={payload.name} />
           ) : share ? (
-            <PhotoWizard token={token} code="" name="" variant="share" />
+            <PhotoWizardWithIntro token={token} code="" name="" variant="share" />
           ) : (
             <div className="max-w-md text-center space-y-3">
               <h1 className="font-display text-2xl font-bold">Odkaz už neplatí</h1>
