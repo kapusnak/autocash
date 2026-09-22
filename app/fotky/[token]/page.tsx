@@ -7,10 +7,34 @@ import { verifyPhotoToken } from "@/lib/photo-token"
 
 export const dynamic = "force-dynamic"
 
+const fotkyTitle = "Autocash — nahrajte fotky vozu"
+const fotkyDescription =
+  "Pošlete fotky auta přes tento odkaz. Rychlé, bezpečné, bez instalace aplikace."
+
+const fotkyOgImage = {
+  url: "/og-fotky.jpg",
+  width: 1200,
+  height: 630,
+  alt: fotkyTitle,
+} as const
+
 export const metadata: Metadata = {
-  title: "Fotky vozu",
-  description: "Nahrajte fotky vozu k poptávce Autocash.",
+  title: { absolute: fotkyTitle },
+  description: fotkyDescription,
   robots: { index: false, follow: false },
+  openGraph: {
+    title: fotkyTitle,
+    description: fotkyDescription,
+    images: [fotkyOgImage],
+    type: "website",
+    locale: "cs_CZ",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: fotkyTitle,
+    description: fotkyDescription,
+    images: [fotkyOgImage],
+  },
 }
 
 export default async function FotkyPage({ params }: { params: Promise<{ token: string }> }) {
