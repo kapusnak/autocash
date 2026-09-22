@@ -14,7 +14,9 @@ import {
   handoffQrLetakScan,
   hasPendingQrLetak,
   isAnalyticsReady,
+  isGtagJsLoaded,
   isGtagReady,
+  markGtagJsLoaded,
   markQrLetakPending,
   replayPendingQrLetak,
   trackQrLetak,
@@ -43,7 +45,12 @@ function mockSessionStorage() {
 
 function installWindow(
   gtag?: (...args: GtagCall) => void,
-  extras?: { googleTagManager?: object; dataLayer?: unknown[] },
+  extras?: {
+    googleTagManager?: object
+    dataLayer?: unknown[]
+    gtagJsLoaded?: boolean
+    document?: { getElementsByTagName: (tag: string) => { length: number } }
+  },
 ) {
   const sessionStorage = mockSessionStorage()
   Object.defineProperty(globalThis, "window", {
@@ -52,15 +59,30 @@ function installWindow(
       gtag,
       dataLayer: extras?.dataLayer ? [...extras.dataLayer] : [],
       google_tag_manager: extras?.googleTagManager,
+      __autocashGtagJsLoaded: extras?.gtagJsLoaded ? true : undefined,
       setTimeout: globalThis.setTimeout.bind(globalThis),
       clearTimeout: globalThis.clearTimeout.bind(globalThis),
       sessionStorage,
+      performance: globalThis.performance,
     },
   })
   Object.defineProperty(globalThis, "sessionStorage", {
     configurable: true,
     value: sessionStorage,
   })
+  if (extras?.document) {
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: extras.document,
+    })
+  } else {
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: {
+        getElementsByTagName: () => ({ length: 0 }),
+      },
+    })
+  }
   return sessionStorage
 }
 
@@ -100,14 +122,17 @@ test("/qr wait timeout matches the homepage 8s beacon", () => {
 
 test("trackQrLetak configs GA4 once then events with send_to", async () => {
   const calls: GtagCall[] = []
-  installWindow((...args) => {
-    calls.push(args)
-    const params = args[2]
-    if (params && typeof params === "object" && "event_callback" in params) {
-      const cb = (params as { event_callback?: unknown }).event_callback
-      if (typeof cb === "function") cb()
-    }
-  })
+  installWindow(
+    (...args) => {
+      calls.push(args)
+      const params = args[2]
+      if (params && typeof params === "object" && "event_callback" in params) {
+        const cb = (params as { event_callback?: unknown }).event_callback
+        if (typeof cb === "function") cb()
+      }
+    },
+    { gtagJsLoaded: true },
+  )
 
   await new Promise<void>((resolve) => {
     trackQrLetak({ onDone: () => resolve() })
@@ -126,7 +151,7 @@ test("trackQrLetak configs GA4 once then events with send_to", async () => {
   assert.equal(params.campaign_medium, QR_LETAK_CAMPAIGN.campaign_medium)
   assert.equal(params.campaign_name, QR_LETAK_CAMPAIGN.campaign_name)
   assert.equal(typeof params.event_callback, "function")
-  assert.equal(params.event_timeout, QR_REDIRECT_HOLD_MS)
+  assert.equal("event_timeout" in params, false)
   assert.equal(
     dataLayerHasQrCustomEvent(
       (globalThis as { window: { dataLayer: unknown[] } }).window.dataLayer,
@@ -156,18 +181,43 @@ test("trackQrLetak without gtag does not mark the scan sent", async () => {
   assert.equal(hasPendingQrLetak(), true)
 })
 
-test("gtag function is ready when GA measurement id is set, even without GTM", async () => {
+test("inline gtag stub is not ready until gtag.js has loaded", async () => {
   const calls: GtagCall[] = []
-  installWindow((...args) => {
+  const storage = installWindow((...args) => {
     calls.push(args)
-    const params = args[2]
-    if (params && typeof params === "object" && "event_callback" in params) {
-      const cb = (params as { event_callback?: unknown }).event_callback
-      if (typeof cb === "function") cb()
-    }
   })
+  markQrLetakPending()
 
   assert.equal(isGtagReady(), true)
+  assert.equal(isGtagJsLoaded(), false)
+  assert.equal(isAnalyticsReady(), false)
+
+  const ready = await waitForAnalytics(150)
+  assert.equal(ready, false)
+
+  await new Promise<void>((resolve) => {
+    trackQrLetak({ onDone: () => resolve() })
+  })
+  assert.equal(calls.length, 0)
+  assert.equal(storage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
+})
+
+test("gtag.js loaded plus gtag function is ready without GTM", async () => {
+  const calls: GtagCall[] = []
+  installWindow(
+    (...args) => {
+      calls.push(args)
+      const params = args[2]
+      if (params && typeof params === "object" && "event_callback" in params) {
+        const cb = (params as { event_callback?: unknown }).event_callback
+        if (typeof cb === "function") cb()
+      }
+    },
+    { gtagJsLoaded: true },
+  )
+
+  assert.equal(isGtagReady(), true)
+  assert.equal(isGtagJsLoaded(), true)
   assert.equal(isAnalyticsReady(), true)
 
   const ready = await waitForAnalytics(150)
@@ -193,12 +243,26 @@ test("waitForAnalytics does not install a gtag stub when GA id is set", async ()
   assert.equal(isAnalyticsReady(), false)
 })
 
+test("GTM plus stub without gtag.js is not ready when GA id is set", async () => {
+  const calls: GtagCall[] = []
+  installWindow((...args) => {
+    calls.push(args)
+  }, { googleTagManager: { "GTM-TEST": {} } })
+
+  assert.equal(isGtagReady(), true)
+  assert.equal(isGtagJsLoaded(), false)
+  assert.equal(isAnalyticsReady(), false)
+
+  const ready = await waitForAnalytics(150)
+  assert.equal(ready, false)
+  assert.equal(calls.length, 0)
+})
+
 test("handoffQrLetakScan still attempts track after a wait timeout and keeps pending", async () => {
   const calls: GtagCall[] = []
   const storage = installWindow((...args) => {
     calls.push(args)
   })
-  // Missing gtag — wait times out; handoff still calls track which no-ops.
   const win = globalThis as { window: { gtag?: unknown } }
   win.window.gtag = undefined
 
@@ -208,16 +272,19 @@ test("handoffQrLetakScan still attempts track after a wait timeout and keeps pen
   assert.equal(storage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
 })
 
-test("handoffQrLetakScan fires config then qr_letak once gtag is ready without GTM", async () => {
+test("handoffQrLetakScan fires config then qr_letak once gtag.js is loaded", async () => {
   const calls: GtagCall[] = []
-  const storage = installWindow((...args) => {
-    calls.push(args)
-    const params = args[2]
-    if (params && typeof params === "object" && "event_callback" in params) {
-      const cb = (params as { event_callback?: unknown }).event_callback
-      if (typeof cb === "function") cb()
-    }
-  })
+  const storage = installWindow(
+    (...args) => {
+      calls.push(args)
+      const params = args[2]
+      if (params && typeof params === "object" && "event_callback" in params) {
+        const cb = (params as { event_callback?: unknown }).event_callback
+        if (typeof cb === "function") cb()
+      }
+    },
+    { gtagJsLoaded: true },
+  )
 
   await handoffQrLetakScan(undefined, 200)
 
@@ -237,6 +304,40 @@ test("handoffQrLetakScan fires config then qr_letak once gtag is ready without G
   assert.equal(storage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
 })
 
+test("trackQrLetak hold without event_callback keeps pending so homepage can retry", async () => {
+  const calls: GtagCall[] = []
+  const storage = installWindow((...args) => {
+    calls.push(args)
+  }, { gtagJsLoaded: true })
+  markQrLetakPending()
+
+  let done = false
+  trackQrLetak({
+    onDone: () => {
+      done = true
+    },
+  })
+
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  assert.equal(done, false)
+  assert.equal(storage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.ok(calls.some((call) => call[0] === "event" && call[1] === GA_EVENT_QR_LETAK))
+
+  await new Promise((resolve) => setTimeout(resolve, QR_REDIRECT_HOLD_MS + 80))
+  assert.equal(done, true)
+  assert.equal(storage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.equal(hasPendingQrLetak(), true)
+})
+
+test("markGtagJsLoaded flips collector ready", () => {
+  installWindow(() => {})
+  assert.equal(isGtagJsLoaded(), false)
+  assert.equal(isAnalyticsReady(), false)
+  markGtagJsLoaded()
+  assert.equal(isGtagJsLoaded(), true)
+  assert.equal(isAnalyticsReady(), true)
+})
+
 test("replayPendingQrLetak attempts track even if the wait timed out", async () => {
   const calls: GtagCall[] = []
   const storage = installWindow()
@@ -251,8 +352,10 @@ test("replayPendingQrLetak attempts track even if the wait timed out", async () 
   const win = globalThis as {
     window: {
       gtag?: (...args: GtagCall) => void
+      __autocashGtagJsLoaded?: boolean
     }
   }
+  win.window.__autocashGtagJsLoaded = true
   win.window.gtag = (...args) => {
     calls.push(args)
     const params = args[2]
@@ -289,7 +392,7 @@ test("GTM-only deploys still require the container before a gtag stub is enough"
   assert.equal(calls.length, 0)
 })
 
-test("GoogleAnalytics component loads gtag.js with GTM and suppresses page_view", () => {
+test("GoogleAnalytics component loads gtag.js with GTM, suppresses page_view, and marks load", () => {
   const gaSrc = readFileSync(
     fileURLToPath(new URL("../components/google-analytics.tsx", import.meta.url)),
     "utf8",
@@ -297,6 +400,8 @@ test("GoogleAnalytics component loads gtag.js with GTM and suppresses page_view"
   assert.match(gaSrc, /shouldLoadDirectGaSnippet/)
   assert.match(gaSrc, /googletagmanager\.com\/gtag\/js\?id=/)
   assert.match(gaSrc, /directGaConfigSnippet/)
+  assert.match(gaSrc, /onLoad=\{markGtagJsLoaded\}/)
+  assert.match(gaSrc, /onReady=\{markGtagJsLoaded\}/)
   assert.equal(shouldLoadDirectGaSnippet(GA_ID, "GTM-P6VZJXTQ"), true)
   assert.match(
     readFileSync(fileURLToPath(new URL("./direct-ga-snippet.ts", import.meta.url)), "utf8"),

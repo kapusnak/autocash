@@ -12,10 +12,9 @@ export const QR_LETAK_PENDING = "pending"
 export const QR_LETAK_SENT = "sent"
 
 /**
- * Wait for a live `window.gtag` when the GA measurement ID is set.
- * Do not wait for GTM in that case — gtag.js from GoogleAnalytics is enough.
+ * Wait for a real collector (`gtag/js` executed), not the inline dataLayer stub.
  * First visit / TCF cookie banner can delay the script — match the homepage
- * beacon so /qr does not redirect before the collector is up.
+ * beacon so /qr does not redirect before collect can leave.
  */
 export const QR_ANALYTICS_READY_TIMEOUT_MS = 8000
 /** Pause after the collector is up so GA4 config / consent defaults can apply. */
@@ -73,15 +72,45 @@ export function isGtmReady(): boolean {
   return hasDataLayerEvent("gtm.load")
 }
 
+/** Next.js Script `onLoad` / `onReady` — the library ran, not just the stub. */
+export function markGtagJsLoaded(): void {
+  if (typeof window === "undefined") return
+  window.__autocashGtagJsLoaded = true
+}
+
 /**
- * Ready to send `qr_letak`.
- * When the GA measurement ID is set: a live `window.gtag` from gtag.js is
- * enough — do not require `google_tag_manager` / `gtm.load`.
+ * True when this page's `gtag/js` has downloaded as a real script (not a
+ * `<link rel="preload">`) or Next.js Script reported load.
+ * The inline `function gtag(){dataLayer.push(arguments)}` is not enough.
+ */
+export function isGtagJsLoaded(): boolean {
+  if (typeof window === "undefined") return false
+  if (window.__autocashGtagJsLoaded) return true
+
+  try {
+    const id = gaMeasurementId()
+    const entries = performance.getEntriesByType("resource")
+    return entries.some((entry) => {
+      const resource = entry as PerformanceResourceTiming
+      if (resource.initiatorType !== "script") return false
+      if (!resource.name.includes("googletagmanager.com/gtag/js")) return false
+      if (id && !resource.name.includes(id)) return false
+      return resource.responseEnd > 0
+    })
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Ready to send `qr_letak` via `gtag('event', …, { send_to })`.
+ * When the GA measurement ID is set: require a live `window.gtag` **and**
+ * executed `gtag/js` (inline stub + GTM enhanced-measurement is not enough).
  * GTM-only deploys still wait for the container (Ads / partial gtag is not enough).
  */
 export function isAnalyticsReady(): boolean {
   if (!isGtagReady()) return false
-  if (hasGa()) return true
+  if (hasGa()) return isGtagJsLoaded()
   if (hasGtm() && !isGtmReady()) return false
   return true
 }
@@ -129,10 +158,26 @@ function waitUntil(predicate: () => boolean, timeoutMs: number): Promise<boolean
   })
 }
 
+function watchGtagJsScriptLoad(): void {
+  if (typeof document === "undefined") return
+  const id = gaMeasurementId()
+  const scripts = document.getElementsByTagName("script")
+  for (let i = 0; i < scripts.length; i++) {
+    const el = scripts[i]
+    const src = el.src || ""
+    if (!src.includes("googletagmanager.com/gtag/js")) continue
+    if (id && !src.includes(id)) continue
+    if (el.dataset.autocashGtagWatch === "1") continue
+    el.dataset.autocashGtagWatch = "1"
+    el.addEventListener("load", markGtagJsLoaded)
+  }
+}
+
 /**
- * Resolves true when `gtag('event')` can reach GA4.
- * With a measurement ID: wait for `typeof window.gtag === 'function'` only
- * (real library from gtag.js). Do not wait for GTM.
+ * Resolves true when `gtag('event')` can reach GA4 collect.
+ * With a measurement ID: wait for `window.gtag` **and** executed `gtag/js`
+ * (preload / inline stub is not enough). Do not treat GTM-only as sufficient
+ * for send_to — Autocash GTM does not assign a collecting `gtag`.
  * GTM-only: wait for `google_tag_manager` / `gtm.load`, then install a stub.
  * Settle is best-effort — a slow pause must not flip the result to false.
  */
@@ -143,8 +188,12 @@ export async function waitForAnalytics(
   if (!hasAnalytics()) return false
 
   if (hasGa()) {
-    const gtagUp = await waitUntil(isGtagReady, timeoutMs)
-    if (!gtagUp) return false
+    watchGtagJsScriptLoad()
+    const collectorUp = await waitUntil(
+      () => isGtagReady() && isGtagJsLoaded(),
+      timeoutMs,
+    )
+    if (!collectorUp) return false
   } else if (hasGtm()) {
     const gtmUp = await waitUntil(isGtmReady, timeoutMs)
     if (!gtmUp) return false
@@ -154,7 +203,7 @@ export async function waitForAnalytics(
   }
 
   if (QR_GTAG_SETTLE_MS > 0) await delay(QR_GTAG_SETTLE_MS)
-  if (hasGa()) return isGtagReady()
+  if (hasGa()) return isGtagReady() && isGtagJsLoaded()
   if (!isGtagReady() && hasGtm() && isGtmReady()) ensureGtag()
   return isGtagReady() && (!hasGtm() || isGtmReady())
 }
@@ -216,9 +265,9 @@ function ensureGa4Configured(gtag: (...args: unknown[]) => void): string | undef
  * once with `gtag('config', id, { send_page_view: false })` then fires
  * the event with `send_to`. GTM still owns page_view.
  *
- * Marks the session flag sent only after `gtag('event', 'qr_letak')` was
- * actually invoked (`event_callback` or the hold elapsed). If gtag
- * is not ready, the pending flag stays so the homepage can retry.
+ * Marks the session flag sent **only** from `event_callback` (the hit left).
+ * The redirect hold still calls `onDone` so `/qr` is not stuck, but pending
+ * stays if the callback never ran — homepage beacon can retry.
  */
 export function trackQrLetak(options?: TrackQrLetakOptions): void {
   if (typeof window === "undefined") {
@@ -241,13 +290,13 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
   }
 
   const holdMs = hasAnalytics() ? QR_REDIRECT_HOLD_MS : 400
-  const succeed = finishOnce(() => {
+  const acknowledge = finishOnce(() => {
     markQrLetakSent()
     done()
   })
 
   const sendTo = ensureGa4Configured(gtag)
-  const timer = window.setTimeout(succeed, holdMs)
+  const timer = window.setTimeout(done, holdMs)
 
   gtag("event", GA_EVENT_QR_LETAK, {
     ...QR_LETAK_CAMPAIGN,
@@ -255,17 +304,16 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     transport_type: "beacon",
     event_callback: () => {
       window.clearTimeout(timer)
-      succeed()
+      acknowledge()
     },
-    event_timeout: holdMs,
   })
 }
 
 /**
- * /qr path: wait for gtag (not GTM when the measurement ID is set), then
- * always attempt the gtag handoff. Redirect only via `onDone`
- * (event_callback / hold, or an immediate no-op that keeps the pending
- * flag when the event was never invoked).
+ * /qr path: wait for executed `gtag/js` (not the inline stub), then always
+ * attempt the gtag handoff. Redirect via `onDone` (event_callback / hold, or
+ * an immediate no-op that keeps the pending flag when the event was never
+ * invoked). Hold without callback does **not** mark sent.
  */
 export async function handoffQrLetakScan(
   onDone?: () => void,
