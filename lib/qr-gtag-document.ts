@@ -50,7 +50,14 @@ export function qrGtagDocument(options: {
     throw new Error("qrGtagDocument requires a GA4 measurement id")
   }
 
-  const eventName = options.eventName
+  // Only the two flyer events may be embedded. Callers that take a query
+  // param must whitelist before this; the throw is the backstop.
+  const eventName = options.eventName === "qr_posta" || options.eventName === "qr_letak"
+    ? options.eventName
+    : null
+  if (!eventName) {
+    throw new Error("qrGtagDocument event must be qr_letak or qr_posta")
+  }
   const src = gaGtagJsSrc(measurementId)
   const payload = {
     measurementId,
@@ -64,7 +71,7 @@ export function qrGtagDocument(options: {
 <html lang="cs">
 <head>
 <meta charset="utf-8">
-<title>qr_letak</title>
+<title>${eventName}</title>
 <script>
 (function(){
   var payload = ${JSON.stringify(payload)};

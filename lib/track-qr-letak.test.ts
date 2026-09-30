@@ -4,20 +4,28 @@ import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import {
   GA_EVENT_QR_LETAK,
+  GA_EVENT_QR_POSTA,
   QR_ANALYTICS_READY_TIMEOUT_MS,
   QR_COLLECT_FLUSH_MS,
   QR_GTAG_COLLECT_PATH,
   QR_GTAG_MESSAGE_SOURCE,
   QR_HOME_BEACON_WAIT_MS,
+  QR_LETAK_CAMPAIGN,
   QR_LETAK_PENDING,
   QR_LETAK_SENT,
   QR_LETAK_STORAGE_KEY,
+  QR_POSTA_CAMPAIGN,
+  QR_POSTA_STORAGE_KEY,
   QR_REDIRECT_HOLD_MS,
   gaGtagJsSrc,
   handoffQrLetakScan,
   hasPendingQrLetak,
+  hasPendingQrPosta,
   markQrLetakPending,
+  qrFlyerCampaign,
+  qrFlyerEventFromQuery,
   replayPendingQrLetak,
+  replayPendingQrPosta,
   trackQrLetak,
 } from "./track-qr-letak.ts"
 import { shouldLoadDirectGaSnippet } from "./direct-ga-snippet.ts"
@@ -51,15 +59,19 @@ function mockSessionStorage() {
   }
 }
 
-function dataLayerHasQrCustomEvent(dataLayer: unknown[]): boolean {
+function dataLayerHasCustomEvent(dataLayer: unknown[], eventName: string): boolean {
   return dataLayer.some((entry) => {
     return Boolean(
       entry &&
         typeof entry === "object" &&
         !("0" in (entry as object)) &&
-        (entry as { event?: unknown }).event === GA_EVENT_QR_LETAK,
+        (entry as { event?: unknown }).event === eventName,
     )
   })
+}
+
+function dataLayerHasQrCustomEvent(dataLayer: unknown[]): boolean {
+  return dataLayerHasCustomEvent(dataLayer, GA_EVENT_QR_LETAK)
 }
 
 function installWindow() {
@@ -354,4 +366,164 @@ test("fire path loads /qr-gtag, does not srcdoc, and does not iframe.remove", ()
   assert.match(src, /QR_COLLECT_FLUSH_MS/)
   assert.equal(src.includes(".srcdoc"), false)
   assert.equal(src.includes(".remove("), false)
+  assert.match(src, /eventName === GA_EVENT_QR_POSTA/)
+})
+
+test("/qr sends exactly one qr_letak and does not touch the postal flag", async () => {
+  const env = installWindow()
+  const handoff = handoffQrLetakScan()
+
+  assert.equal(env.iframes.length, 1)
+  assert.equal(env.iframes[0]?.src, "/qr-gtag")
+  assert.equal(env.iframes[0]?.src.includes("?"), false)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), null)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_POSTA, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.equal(env.messageListeners.length, 1)
+
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), null)
+  env.flushCollect()
+  await handoff
+  assert.equal(env.iframes.length, 1)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(hasPendingQrPosta(), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+})
+
+test("/qrposta sends exactly one qr_posta and never qr_letak", async () => {
+  const env = installWindow()
+  const handoff = handoffQrLetakScan(undefined, undefined, GA_EVENT_QR_POSTA)
+
+  assert.equal(env.iframes.length, 1)
+  assert.equal(env.iframes[0]?.src, "/qr-gtag?event=qr_posta")
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), null)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), QR_LETAK_PENDING)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), null)
+  assert.equal(env.messageListeners.length, 1)
+
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_POSTA, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), QR_LETAK_SENT)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), null)
+  env.flushCollect()
+  await handoff
+  assert.equal(env.iframes.length, 1)
+  assert.equal(hasPendingQrPosta(), false)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+})
+
+test("qrposta timeout keeps only the postal pending flag for the homepage retry", () => {
+  const env = installWindow()
+  let done = false
+  trackQrLetak({
+    eventName: GA_EVENT_QR_POSTA,
+    onDone: () => {
+      done = true
+    },
+  })
+  env.sessionStorage.setItem(QR_POSTA_STORAGE_KEY, QR_LETAK_PENDING)
+
+  env.flushHold()
+  assert.equal(done, true)
+  assert.equal(hasPendingQrPosta(), true)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(env.iframes.length, 1)
+  assert.equal(env.iframes[0]?.src, "/qr-gtag?event=qr_posta")
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+})
+
+test("homepage replays qr_posta only from the postal pending flag", () => {
+  const env = installWindow()
+  replayPendingQrPosta()
+  assert.equal(env.iframes.length, 0)
+
+  replayPendingQrLetak()
+  assert.equal(env.iframes.length, 0)
+
+  env.sessionStorage.setItem(QR_POSTA_STORAGE_KEY, QR_LETAK_PENDING)
+  replayPendingQrLetak()
+  assert.equal(env.iframes.length, 0, "field replay must not fire for a postal pending flag")
+
+  replayPendingQrPosta()
+  assert.equal(env.iframes.length, 1)
+  assert.equal(env.iframes[0]?.src, "/qr-gtag?event=qr_posta")
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  assert.equal(hasPendingQrPosta(), true)
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_POSTA, sent: true })
+  env.flushCollect()
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), QR_LETAK_SENT)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), null)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+})
+
+test("qr-gtag event query allows only qr_letak and qr_posta", () => {
+  assert.equal(qrFlyerEventFromQuery(null), GA_EVENT_QR_LETAK)
+  assert.equal(qrFlyerEventFromQuery(GA_EVENT_QR_LETAK), GA_EVENT_QR_LETAK)
+  assert.equal(qrFlyerEventFromQuery(GA_EVENT_QR_POSTA), GA_EVENT_QR_POSTA)
+  assert.equal(qrFlyerEventFromQuery(""), null)
+  assert.equal(qrFlyerEventFromQuery("purchase"), null)
+  assert.equal(qrFlyerEventFromQuery("qr_posta "), null)
+  assert.equal(qrFlyerEventFromQuery("QR_POSTA"), null)
+  assert.deepEqual(qrFlyerCampaign(GA_EVENT_QR_LETAK), {
+    source: QR_LETAK_CAMPAIGN.campaign_source,
+    medium: QR_LETAK_CAMPAIGN.campaign_medium,
+    name: QR_LETAK_CAMPAIGN.campaign_name,
+  })
+  assert.deepEqual(qrFlyerCampaign(GA_EVENT_QR_POSTA), {
+    source: QR_POSTA_CAMPAIGN.campaign_source,
+    medium: QR_POSTA_CAMPAIGN.campaign_medium,
+    name: QR_POSTA_CAMPAIGN.campaign_name,
+  })
+  assert.equal(qrFlyerCampaign(GA_EVENT_QR_POSTA).source, "posta")
+  assert.notEqual(qrFlyerCampaign(GA_EVENT_QR_POSTA).source, QR_LETAK_CAMPAIGN.campaign_source)
+})
+
+test("/qrposta page is noindex like /qr and is not in the sitemap", () => {
+  const qrPage = readFileSync(fileURLToPath(new URL("../app/qr/page.tsx", import.meta.url)), "utf8")
+  const postaPage = readFileSync(
+    fileURLToPath(new URL("../app/qrposta/page.tsx", import.meta.url)),
+    "utf8",
+  )
+  const robots = readFileSync(fileURLToPath(new URL("../app/robots.ts", import.meta.url)), "utf8")
+  const sitemap = readFileSync(fileURLToPath(new URL("../app/sitemap.ts", import.meta.url)), "utf8")
+  const beacon = readFileSync(
+    fileURLToPath(new URL("../components/qr-letak-home-beacon.tsx", import.meta.url)),
+    "utf8",
+  )
+  const redirect = readFileSync(
+    fileURLToPath(new URL("../app/qr/qr-letak-redirect.tsx", import.meta.url)),
+    "utf8",
+  )
+
+  assert.equal(qrPage.includes("qr_posta"), false)
+  assert.equal(qrPage.includes("GA_EVENT_QR_POSTA"), false)
+  assert.match(qrPage, /<QrLetakRedirect \/>/)
+  assert.match(postaPage, /eventName=\{GA_EVENT_QR_POSTA\}/)
+  assert.match(postaPage, /index: false, follow: false/)
+  assert.match(postaPage, /isCrawlerUserAgent/)
+  assert.match(postaPage, /redirect\("\/"\)/)
+  assert.match(robots, /"\/qr"/)
+  assert.match(robots, /"\/qrposta"/)
+  assert.match(robots, /"\/qr-gtag"/)
+  assert.equal(sitemap.includes("qr"), false)
+  assert.match(beacon, /path === "\/qr" \|\| path === "\/qrposta"/)
+  assert.match(beacon, /replayPendingQrLetak\(\)/)
+  assert.match(beacon, /replayPendingQrPosta\(\)/)
+  assert.match(redirect, /eventName = GA_EVENT_QR_LETAK/)
+  assert.match(redirect, /handoffQrLetakScan/)
 })

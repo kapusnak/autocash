@@ -96,15 +96,23 @@ function assert(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(message)
 }
 
-function dataLayerHasQrCustomEvent(): boolean {
+function dataLayerHasCustomEvent(eventName: string): boolean {
   return dataLayer.some((entry) => {
     return Boolean(
       entry &&
         typeof entry === "object" &&
         !("0" in (entry as object)) &&
-        (entry as { event?: unknown }).event === "qr_letak",
+        (entry as { event?: unknown }).event === eventName,
     )
   })
+}
+
+function dataLayerHasQrCustomEvent(): boolean {
+  return dataLayerHasCustomEvent("qr_letak")
+}
+
+function countOf(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1
 }
 
 function dispatch(data: unknown, origin = ORIGIN) {
@@ -224,6 +232,71 @@ async function main() {
   assert(replayFlush, "homepage replay must flush collect before considering done")
   replayFlush.fn()
   assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "homepage callback marks sent")
+
+  const { GA_EVENT_QR_POSTA, QR_POSTA_STORAGE_KEY, qrFlyerCampaign, qrFlyerEventFromQuery } =
+    await import("../lib/track-qr-letak")
+  const { GET } = await import("../app/qr-gtag/route")
+
+  assert(qrFlyerEventFromQuery(null) === GA_EVENT_QR_LETAK, "missing event query stays qr_letak")
+  assert(qrFlyerEventFromQuery("qr_posta") === "qr_posta", "qr_posta is allowed")
+  assert(qrFlyerEventFromQuery("purchase") === null, "unknown event query is rejected")
+  assert(qrFlyerCampaign("qr_letak").source === "letak", "field campaign source stays letak")
+  assert(qrFlyerCampaign("qr_posta").source === "posta", "postal campaign source is posta")
+  assert(qrFlyerCampaign("qr_posta").name === "posta_print", "postal campaign name is posta_print")
+
+  const letakRes = await GET(new Request("https://autocash.cz/qr-gtag"))
+  assert(letakRes.status === 200, "GET /qr-gtag stays 200")
+  assert(letakRes.headers.get("x-robots-tag") === "noindex, nofollow", "/qr-gtag stays noindex")
+  assert(letakRes.headers.get("cache-control") === "no-store", "/qr-gtag stays uncached")
+  const letakHtml = await letakRes.text()
+  assert(letakHtml === html, "GET /qr-gtag must stay the field-leaflet document")
+  assert(countOf(letakHtml, 'gtag("event"') === 1, "/qr-gtag must queue exactly one gtag event")
+  assert(!letakHtml.includes("qr_posta"), "/qr-gtag must not mention qr_posta")
+
+  const explicitLetak = await GET(new Request("https://autocash.cz/qr-gtag?event=qr_letak"))
+  assert((await explicitLetak.text()) === html, "event=qr_letak must match the default document")
+
+  const postaRes = await GET(
+    new Request("https://autocash.cz/qr-gtag?event=qr_posta&campaign_source=letak"),
+  )
+  assert(postaRes.status === 200, "GET /qr-gtag?event=qr_posta stays 200")
+  assert(postaRes.headers.get("x-robots-tag") === "noindex, nofollow", "postal collector stays noindex")
+  const postaHtml = await postaRes.text()
+  assert(countOf(postaHtml, 'gtag("event"') === 1, "postal collector must queue exactly one gtag event")
+  assert(countOf(postaHtml, '"eventName":"qr_posta"') === 1, "postal payload names qr_posta once")
+  assert(postaHtml.includes('"source":"posta"'), "postal campaign source is not taken from the query")
+  assert(postaHtml.includes('"name":"posta_print"'), "postal campaign name identifies the mailing")
+  assert(!postaHtml.includes("qr_letak"), "postal collector must never emit qr_letak")
+  assert(!postaHtml.includes("letak"), "postal collector must not keep the field-leaflet campaign")
+  assert(!postaHtml.includes("{ event:"), "postal collector must not push a Custom Event")
+
+  const evil = await GET(new Request("https://autocash.cz/qr-gtag?event=purchase"))
+  assert(evil.status === 400, "unknown event query must be rejected")
+  assert(!(await evil.text()).includes("gtag("), "rejected event must not render a collector")
+
+  iframes.length = 0
+  messageListeners.length = 0
+  timeouts.length = 0
+  storage.removeItem(QR_POSTA_STORAGE_KEY)
+  await new Promise<void>((resolve) => {
+    const pending = handoffQrLetakScan(() => resolve(), undefined, GA_EVENT_QR_POSTA)
+    assert(iframes.length === 1, "/qrposta must create one collector iframe")
+    assert(iframes[0]!.src === "/qr-gtag?event=qr_posta", "/qrposta iframe must request qr_posta")
+    assert(storage.getItem(QR_LETAK_STORAGE_KEY) === QR_LETAK_SENT, "postal handoff must not reset qr_letak")
+    assert(storage.getItem(QR_POSTA_STORAGE_KEY) === QR_LETAK_PENDING, "postal handoff queues its own flag")
+    assert(!dataLayerHasQrCustomEvent(), "postal handoff must not dataLayer.push qr_letak")
+    assert(!dataLayerHasCustomEvent(GA_EVENT_QR_POSTA), "postal handoff must not dataLayer.push qr_posta")
+    dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+    assert(storage.getItem(QR_POSTA_STORAGE_KEY) === QR_LETAK_PENDING, "qr_letak callback must not complete qr_posta")
+    dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_POSTA, sent: true })
+    const flush = timeouts.find((item) => item.ms === QR_COLLECT_FLUSH_MS)
+    assert(flush, "qr_posta callback must schedule a collect flush")
+    flush.fn()
+    void pending
+  })
+  assert(storage.getItem(QR_POSTA_STORAGE_KEY) === QR_LETAK_SENT, "qr_posta callback marks the postal flag sent")
+  assert(!dataLayerHasCustomEvent(GA_EVENT_QR_POSTA), "must not dataLayer.push({ event: 'qr_posta' })")
+  assert(!dataLayerHasQrCustomEvent(), "must not dataLayer.push({ event: 'qr_letak' })")
 
   console.log("ok")
 }

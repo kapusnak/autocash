@@ -66,3 +66,4 @@ Po cutoveru z Railway odstraňte `NEXT_PUBLIC_EMAILJS_*`. Bez rebuildu by se sta
 - [ ] `/jak-to-funguje`, `/kontakty`, GDPR, cookies
 - [ ] Mobilní menu
 - [ ] `/qr` (leták) → event `qr_letak` → čisté `/` (Googlebot jen redirect, bez eventu)
+- [ ] `/qrposta` (poštovní leták) → event `qr_posta` (`en=qr_posta`, `tid=G-DXBBY6TFGG`) → čisté `/`, ne `qr_letak`
