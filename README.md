@@ -41,4 +41,6 @@ Nasazení: viz [DEPLOY.md](./DEPLOY.md).
 
 ## Leták QR (`/qr`)
 
-Tištěný QR kód míří na `https://autocash.cz/qr` (ne na homepage). `/qr` vloží GTM-free iframe s oficiálním `gtag/js` (fronta `js`/`config`/`event` před skriptem) a pošle `gtag('event', 'qr_letak')` na `G-DXBBY6TFGG`, pak přesměruje na čisté `/`. GTM dál vlastní page_view; tag `GA4 - qr_letak` nechte paused. Pending flag se smaže až po `event_callback`. Cestu neodkazujte v menu ani v sitemapě.
+Tištěný QR kód v terénu míří na `https://autocash.cz/qr` (ne na homepage). `/qr` vloží GTM-free iframe s oficiálním `gtag/js` (fronta `js`/`config`/`event` před skriptem) a pošle `gtag('event', 'qr_letak')` na `G-DXBBY6TFGG`, pak přesměruje na čisté `/`. GTM dál vlastní page_view; tag `GA4 - qr_letak` nechte paused. Pending flag se smaže až po `event_callback`. Cestu neodkazujte v menu ani v sitemapě.
+
+Poštovní leták má vlastní QR na `https://autocash.cz/qrposta`. Chová se stejně (jeden hit, pak čisté `/`), ale event je `qr_posta` a kampaň `posta` / `qr` / `posta_print`, aby se skeny z pošty nepočítaly do `qr_letak`.

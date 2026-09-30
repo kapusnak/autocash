@@ -7,7 +7,12 @@ import {
   qrGtagDocument,
   QR_GTAG_MESSAGE_SOURCE,
 } from "./qr-gtag-document.ts"
-import { GA_EVENT_QR_LETAK, QR_LETAK_CAMPAIGN } from "./track-qr-letak.ts"
+import {
+  GA_EVENT_QR_LETAK,
+  GA_EVENT_QR_POSTA,
+  QR_LETAK_CAMPAIGN,
+  QR_POSTA_CAMPAIGN,
+} from "./track-qr-letak.ts"
 
 const GA_ID = "G-DXBBY6TFGG"
 
@@ -62,6 +67,47 @@ test("collector HTML queues js/config/event before gtag/js and never uses GTM or
   assert.ok(html.includes(QR_GTAG_MESSAGE_SOURCE))
   assert.ok(html.includes(GA_EVENT_QR_LETAK))
   assert.ok(html.includes(GA_ID))
+  assert.equal(html.includes(GA_EVENT_QR_POSTA), false)
+  assert.equal(html.split('gtag("event"').length - 1, 1)
+  assert.equal(html.includes("{ event:"), false)
+})
+
+test("postal collector names qr_posta once and never qr_letak", () => {
+  const html = qrGtagDocument({
+    measurementId: GA_ID,
+    eventName: GA_EVENT_QR_POSTA,
+    campaign: {
+      source: QR_POSTA_CAMPAIGN.campaign_source,
+      medium: QR_POSTA_CAMPAIGN.campaign_medium,
+      name: QR_POSTA_CAMPAIGN.campaign_name,
+    },
+    callbackTimeoutMs: 8000,
+  })
+
+  assert.equal(html.split('gtag("event"').length - 1, 1)
+  assert.equal(html.split('"eventName":"qr_posta"').length - 1, 1)
+  assert.match(html, /<title>qr_posta<\/title>/)
+  assert.match(html, /"source":"posta"/)
+  assert.match(html, /"medium":"qr"/)
+  assert.match(html, /"name":"posta_print"/)
+  assert.equal(html.includes("qr_letak"), false)
+  assert.equal(html.includes("letak"), false)
+  assert.equal(html.includes("{ event:"), false)
+  assert.equal(html.includes("GTM-"), false)
+  assert.equal(html.includes("AW-"), false)
+})
+
+test("qrGtagDocument rejects event names outside the flyer whitelist", () => {
+  assert.throws(
+    () =>
+      qrGtagDocument({
+        measurementId: GA_ID,
+        eventName: "purchase",
+        campaign: { source: "x", medium: "qr", name: "x" },
+        callbackTimeoutMs: 8000,
+      }),
+    /qr_letak or qr_posta/,
+  )
 })
 
 test("isQrGtagMessage requires source, event name, and sent boolean", () => {

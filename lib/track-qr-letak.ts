@@ -5,8 +5,26 @@ import {
   QR_GTAG_MESSAGE_SOURCE,
 } from "./qr-gtag-document.ts"
 
-/** Flyer QR scan — keep this name in sync with sibling sites. */
+/** Field-leaflet QR scan — keep this name in sync with sibling sites. */
 export const GA_EVENT_QR_LETAK = "qr_letak"
+/** Postal-leaflet QR scan. Separate from `qr_letak` so the two flyers count apart. */
+export const GA_EVENT_QR_POSTA = "qr_posta"
+
+export type QrFlyerEventName = typeof GA_EVENT_QR_LETAK | typeof GA_EVENT_QR_POSTA
+
+export function isQrFlyerEventName(value: string): value is QrFlyerEventName {
+  return value === GA_EVENT_QR_LETAK || value === GA_EVENT_QR_POSTA
+}
+
+/**
+ * `/qr-gtag` query `event`. Missing param stays the field leaflet so `/qr`
+ * can keep loading `/qr-gtag` with no query. Any other value is rejected.
+ */
+export function qrFlyerEventFromQuery(eventParam: string | null): QrFlyerEventName | null {
+  if (eventParam === null) return GA_EVENT_QR_LETAK
+  if (isQrFlyerEventName(eventParam)) return eventParam
+  return null
+}
 
 export const QR_LETAK_CAMPAIGN = {
   campaign_source: "letak",
@@ -14,7 +32,28 @@ export const QR_LETAK_CAMPAIGN = {
   campaign_name: "letak_print",
 } as const
 
+export const QR_POSTA_CAMPAIGN = {
+  campaign_source: "posta",
+  campaign_medium: "qr",
+  campaign_name: "posta_print",
+} as const
+
+/** Campaign params embedded in the collector. Not taken from the query string. */
+export function qrFlyerCampaign(eventName: QrFlyerEventName): {
+  source: string
+  medium: string
+  name: string
+} {
+  const campaign = eventName === GA_EVENT_QR_POSTA ? QR_POSTA_CAMPAIGN : QR_LETAK_CAMPAIGN
+  return {
+    source: campaign.campaign_source,
+    medium: campaign.campaign_medium,
+    name: campaign.campaign_name,
+  }
+}
+
 export const QR_LETAK_STORAGE_KEY = "autocash_qr_letak"
+export const QR_POSTA_STORAGE_KEY = "autocash_qr_posta"
 export const QR_LETAK_PENDING = "pending"
 export const QR_LETAK_SENT = "sent"
 
@@ -35,6 +74,8 @@ export const QR_GTAG_COLLECT_PATH = "/qr-gtag"
 
 type TrackQrLetakOptions = {
   onDone?: () => void
+  /** Defaults to the field leaflet so existing `/qr` callers stay on `qr_letak`. */
+  eventName?: QrFlyerEventName
 }
 
 function gaMeasurementId(): string {
@@ -83,6 +124,31 @@ export function clearQrLetakFlag(): void {
   }
 }
 
+export function markQrPostaPending(): void {
+  try {
+    sessionStorage.setItem(QR_POSTA_STORAGE_KEY, QR_LETAK_PENDING)
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+export function markQrPostaSent(): void {
+  try {
+    sessionStorage.setItem(QR_POSTA_STORAGE_KEY, QR_LETAK_SENT)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** True when /qrposta queued a scan that has not been delivered via gtag yet. */
+export function hasPendingQrPosta(): boolean {
+  try {
+    return sessionStorage.getItem(QR_POSTA_STORAGE_KEY) === QR_LETAK_PENDING
+  } catch {
+    return false
+  }
+}
+
 /**
  * Fires exactly one `qr_letak` from `/qr-gtag` in a hidden iframe (GTM-free
  * document; official gtag order). Never `dataLayer.push({ event: 'qr_letak' })`
@@ -106,6 +172,8 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     return
   }
 
+  const eventName = options?.eventName === GA_EVENT_QR_POSTA ? GA_EVENT_QR_POSTA : GA_EVENT_QR_LETAK
+
   const iframe = document.createElement("iframe")
   iframe.setAttribute("aria-hidden", "true")
   iframe.setAttribute("title", "")
@@ -122,10 +190,11 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
     const origin = window.location?.origin
     if (origin && event.origin && event.origin !== origin) return
     if (!isQrGtagMessage(event.data)) return
-    if (event.data.event !== GA_EVENT_QR_LETAK) return
+    if (event.data.event !== eventName) return
     stopListening()
     if (event.data.sent) {
-      markQrLetakSent()
+      if (eventName === GA_EVENT_QR_POSTA) markQrPostaSent()
+      else markQrLetakSent()
       timer = window.setTimeout(done, QR_COLLECT_FLUSH_MS)
       return
     }
@@ -139,6 +208,11 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
 
   window.addEventListener("message", onMessage)
   iframe.src = QR_GTAG_COLLECT_PATH
+  // Only the postal flyer adds a query. Set it before the iframe is attached
+  // so `/qr` still navigates once, to `/qr-gtag` with no query string.
+  if (eventName === GA_EVENT_QR_POSTA) {
+    iframe.src = `${QR_GTAG_COLLECT_PATH}?event=${GA_EVENT_QR_POSTA}`
+  }
 
   const host = document.body ?? document.documentElement
   if (!host) {
@@ -157,10 +231,13 @@ export function trackQrLetak(options?: TrackQrLetakOptions): void {
 export async function handoffQrLetakScan(
   onDone?: () => void,
   _waitMs = QR_ANALYTICS_READY_TIMEOUT_MS,
+  eventName: QrFlyerEventName = GA_EVENT_QR_LETAK,
 ): Promise<void> {
-  markQrLetakPending()
+  if (eventName === GA_EVENT_QR_POSTA) markQrPostaPending()
+  else markQrLetakPending()
   await new Promise<void>((resolve) => {
     trackQrLetak({
+      eventName,
       onDone: () => {
         onDone?.()
         resolve()
@@ -177,4 +254,11 @@ export function replayPendingQrLetak(_waitMs = QR_HOME_BEACON_WAIT_MS): void {
   if (typeof window === "undefined") return
   if (!hasPendingQrLetak()) return
   trackQrLetak()
+}
+
+/** Homepage safety net for a postal scan that never got `event_callback`. */
+export function replayPendingQrPosta(_waitMs = QR_HOME_BEACON_WAIT_MS): void {
+  if (typeof window === "undefined") return
+  if (!hasPendingQrPosta()) return
+  trackQrLetak({ eventName: GA_EVENT_QR_POSTA })
 }

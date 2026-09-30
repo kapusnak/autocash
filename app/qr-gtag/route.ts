@@ -1,26 +1,30 @@
 import { NextResponse } from "next/server"
 
-import { GA_EVENT_QR_LETAK, QR_LETAK_CAMPAIGN, QR_REDIRECT_HOLD_MS } from "@/lib/track-qr-letak"
 import { isGaMeasurementId, qrGtagDocument } from "@/lib/qr-gtag-document"
+import { QR_REDIRECT_HOLD_MS, qrFlyerCampaign, qrFlyerEventFromQuery } from "@/lib/track-qr-letak"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-/** Inspectable GTM-free collector HTML. `/qr` loads this route in a hidden iframe. */
-export function GET() {
+/**
+ * GTM-free collector HTML. `/qr` loads `/qr-gtag` (field leaflet, `qr_letak`).
+ * `/qrposta` loads `/qr-gtag?event=qr_posta`. Any other `event` value is rejected.
+ */
+export function GET(request: Request) {
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? ""
   if (!isGaMeasurementId(measurementId)) {
     return new NextResponse("GA measurement id is not set", { status: 404 })
   }
 
+  const eventName = qrFlyerEventFromQuery(new URL(request.url).searchParams.get("event"))
+  if (!eventName) {
+    return new NextResponse("Unknown QR event", { status: 400 })
+  }
+
   const html = qrGtagDocument({
     measurementId,
-    eventName: GA_EVENT_QR_LETAK,
-    campaign: {
-      source: QR_LETAK_CAMPAIGN.campaign_source,
-      medium: QR_LETAK_CAMPAIGN.campaign_medium,
-      name: QR_LETAK_CAMPAIGN.campaign_name,
-    },
+    eventName,
+    campaign: qrFlyerCampaign(eventName),
     callbackTimeoutMs: QR_REDIRECT_HOLD_MS,
   })
 
