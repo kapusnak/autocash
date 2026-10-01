@@ -5,7 +5,9 @@ import {
   isGaMeasurementId,
   isQrGtagMessage,
   qrGtagDocument,
+  qrGtagPreconnectMarkup,
   QR_GTAG_MESSAGE_SOURCE,
+  QR_GTAG_PRECONNECT_ORIGINS,
 } from "./qr-gtag-document.ts"
 import {
   GA_EVENT_QR_LETAK,
@@ -57,8 +59,14 @@ test("collector HTML queues js/config/event before gtag/js and never uses GTM or
   assert.match(html, /analytics_storage: "granted"/)
   assert.match(html, /send_page_view: false/)
   assert.match(html, /event_callback/)
-  assert.match(html, /transport_type: "beacon"/)
+  assert.equal(html.includes("transport_type"), false)
   assert.match(html, /send_to: payload.measurementId/)
+  assert.match(html, /setTimeout\(function\(\)\{ notify\(false\); \}, payload\.callbackTimeoutMs\)/)
+  assert.ok(html.includes(qrGtagPreconnectMarkup()))
+  for (const href of QR_GTAG_PRECONNECT_ORIGINS) {
+    assert.equal(html.split(`rel="preconnect" href="${href}"`).length - 1, 1)
+    assert.equal(html.split(`rel="dns-prefetch" href="${href}"`).length - 1, 1)
+  }
   assert.equal(html.includes("GTM-"), false)
   assert.equal(html.includes("AW-"), false)
   assert.equal(html.includes("autocashGaDl"), false)

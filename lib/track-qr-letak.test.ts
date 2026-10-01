@@ -191,11 +191,12 @@ afterEach(() => {
   delete process.env[GTM_ENV]
 })
 
-test("/qr iframe wait is 8s like the homepage beacon", () => {
-  assert.equal(QR_ANALYTICS_READY_TIMEOUT_MS, 8000)
+test("redirect hold is 4s and collect flush is 150ms", () => {
+  assert.equal(QR_ANALYTICS_READY_TIMEOUT_MS, 4000)
   assert.equal(QR_HOME_BEACON_WAIT_MS, 8000)
-  assert.equal(QR_REDIRECT_HOLD_MS, 8000)
-  assert.equal(QR_COLLECT_FLUSH_MS, 800)
+  assert.equal(QR_REDIRECT_HOLD_MS, 4000)
+  assert.equal(QR_REDIRECT_HOLD_MS, QR_ANALYTICS_READY_TIMEOUT_MS)
+  assert.equal(QR_COLLECT_FLUSH_MS, 150)
   assert.equal(QR_GTAG_COLLECT_PATH, "/qr-gtag")
 })
 
@@ -357,6 +358,10 @@ test("qr redirect still skips bots and webdriver in the landing component", () =
   assert.match(src, /isCrawlerUserAgent/)
   assert.match(src, /navigator\.webdriver/)
   assert.match(src, /handoffQrLetakScan/)
+  assert.match(src, /QR_GTAG_PRECONNECT_ORIGINS/)
+  assert.match(src, /rel="preconnect"/)
+  assert.match(src, /rel="dns-prefetch"/)
+  assert.equal(src.includes("<iframe"), false)
 })
 
 test("fire path loads /qr-gtag, does not srcdoc, and does not iframe.remove", () => {
@@ -446,6 +451,62 @@ test("qrposta timeout keeps only the postal pending flag for the homepage retry"
   assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
 })
 
+test("hold timeout keeps pending so homepage replay sends qr_letak once", async () => {
+  const env = installWindow()
+  const handoff = handoffQrLetakScan()
+
+  env.flushHold()
+  await handoff
+  assert.equal(hasPendingQrLetak(), true)
+  assert.equal(env.iframes.length, 1)
+
+  replayPendingQrLetak()
+  assert.equal(env.iframes.length, 2)
+  assert.equal(env.iframes[1]?.src, "/qr-gtag")
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), QR_LETAK_SENT)
+  env.flushCollect()
+  replayPendingQrLetak()
+  assert.equal(env.iframes.length, 2)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+})
+
+test("hold timeout keeps pending so homepage replay sends qr_posta once", () => {
+  const env = installWindow()
+  let done = false
+  const handoff = handoffQrLetakScan(
+    () => {
+      done = true
+    },
+    undefined,
+    GA_EVENT_QR_POSTA,
+  )
+
+  env.flushHold()
+  assert.equal(done, true)
+  void handoff
+  assert.equal(hasPendingQrPosta(), true)
+  assert.equal(hasPendingQrLetak(), false)
+  assert.equal(env.iframes.length, 1)
+
+  replayPendingQrPosta()
+  assert.equal(env.iframes.length, 2)
+  assert.equal(env.iframes[1]?.src, "/qr-gtag?event=qr_posta")
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_LETAK, sent: true })
+  assert.equal(hasPendingQrPosta(), true)
+  env.dispatch({ source: QR_GTAG_MESSAGE_SOURCE, event: GA_EVENT_QR_POSTA, sent: true })
+  assert.equal(env.sessionStorage.getItem(QR_POSTA_STORAGE_KEY), QR_LETAK_SENT)
+  env.flushCollect()
+  replayPendingQrPosta()
+  replayPendingQrLetak()
+  assert.equal(env.iframes.length, 2)
+  assert.equal(hasPendingQrPosta(), false)
+  assert.equal(env.sessionStorage.getItem(QR_LETAK_STORAGE_KEY), null)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_POSTA), false)
+  assert.equal(dataLayerHasCustomEvent(env.dataLayer, GA_EVENT_QR_LETAK), false)
+})
+
 test("homepage replays qr_posta only from the postal pending flag", () => {
   const env = installWindow()
   replayPendingQrPosta()
@@ -509,6 +570,7 @@ test("/qrposta page is noindex like /qr and is not in the sitemap", () => {
     fileURLToPath(new URL("../app/qr/qr-letak-redirect.tsx", import.meta.url)),
     "utf8",
   )
+  const layout = readFileSync(fileURLToPath(new URL("../app/layout.tsx", import.meta.url)), "utf8")
 
   assert.equal(qrPage.includes("qr_posta"), false)
   assert.equal(qrPage.includes("GA_EVENT_QR_POSTA"), false)
@@ -526,4 +588,7 @@ test("/qrposta page is noindex like /qr and is not in the sitemap", () => {
   assert.match(beacon, /replayPendingQrPosta\(\)/)
   assert.match(redirect, /eventName = GA_EVENT_QR_LETAK/)
   assert.match(redirect, /handoffQrLetakScan/)
+  assert.match(redirect, /rel="preconnect"/)
+  assert.equal(layout.includes('rel="preconnect"'), false)
+  assert.equal(layout.includes("https://www.google-analytics.com"), false)
 })

@@ -168,10 +168,11 @@ async function main() {
   } = await import("../lib/track-qr-letak")
   const { qrGtagDocument } = await import("../lib/qr-gtag-document")
 
-  assert(QR_ANALYTICS_READY_TIMEOUT_MS === 8000, "/qr wait must be 8s")
+  assert(QR_ANALYTICS_READY_TIMEOUT_MS === 4000, "/qr wait must be 4s")
   assert(QR_HOME_BEACON_WAIT_MS === 8000, "homepage beacon wait must stay 8s")
-  assert(QR_REDIRECT_HOLD_MS === 8000, "iframe callback wait must be 8s")
-  assert(QR_COLLECT_FLUSH_MS === 800, "must delay redirect after callback so collect can leave")
+  assert(QR_REDIRECT_HOLD_MS === 4000, "iframe callback wait must be 4s")
+  assert(QR_REDIRECT_HOLD_MS === QR_ANALYTICS_READY_TIMEOUT_MS, "redirect hold aliases the iframe wait")
+  assert(QR_COLLECT_FLUSH_MS === 150, "must delay redirect briefly after callback so keepalive collect can leave")
   assert(QR_GTAG_COLLECT_PATH === "/qr-gtag", "iframe must load the GTM-free collector route")
   assert(!new URL(gaGtagJsSrc("G-DXBBY6TFGG")).searchParams.has("l"), "collector gtag.js must use the default dataLayer")
 
@@ -179,7 +180,7 @@ async function main() {
     measurementId: "G-DXBBY6TFGG",
     eventName: GA_EVENT_QR_LETAK,
     campaign: { source: "letak", medium: "qr", name: "letak_print" },
-    callbackTimeoutMs: 8000,
+    callbackTimeoutMs: QR_REDIRECT_HOLD_MS,
   })
   assert(html.indexOf("function gtag()") < html.indexOf("gtag/js?id=G-DXBBY6TFGG"), "stub must queue before gtag/js")
   assert(html.includes('gtag("consent", "default"'), "collector must set consent so hits use google-analytics collect")
@@ -189,6 +190,12 @@ async function main() {
   assert(!html.includes("GTM-"), "collector must not load GTM")
   assert(!html.includes("AW-"), "collector must not use Ads AW")
   assert(!html.includes("autocashGaDl"), "collector must not use the #21 isolated layer")
+  assert(!html.includes("transport_type"), "GA4 must not receive transport_type")
+  assert(html.includes('rel="preconnect" href="https://www.googletagmanager.com"'), "collector must preconnect gtag.js")
+  assert(html.includes('rel="preconnect" href="https://www.google-analytics.com"'), "collector must preconnect collect")
+  assert(html.includes('rel="dns-prefetch" href="https://www.googletagmanager.com"'), "collector must dns-prefetch gtag.js")
+  assert(html.includes('rel="dns-prefetch" href="https://www.google-analytics.com"'), "collector must dns-prefetch collect")
+  assert(html.includes('"callbackTimeoutMs":4000'), "collector fallback must match the 4s hold")
 
   markQrLetakPending()
   let holdDone = false
@@ -266,6 +273,9 @@ async function main() {
   assert(countOf(postaHtml, '"eventName":"qr_posta"') === 1, "postal payload names qr_posta once")
   assert(postaHtml.includes('"source":"posta"'), "postal campaign source is not taken from the query")
   assert(postaHtml.includes('"name":"posta_print"'), "postal campaign name identifies the mailing")
+  assert(!postaHtml.includes("transport_type"), "postal collector must not send transport_type")
+  assert(postaHtml.includes('rel="preconnect" href="https://www.google-analytics.com"'), "postal collector must preconnect collect")
+  assert(postaHtml.includes('"callbackTimeoutMs":4000'), "postal collector fallback must match the 4s hold")
   assert(!postaHtml.includes("qr_letak"), "postal collector must never emit qr_letak")
   assert(!postaHtml.includes("letak"), "postal collector must not keep the field-leaflet campaign")
   assert(!postaHtml.includes("{ event:"), "postal collector must not push a Custom Event")

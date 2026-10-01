@@ -61,14 +61,20 @@ export { gaGtagJsSrc, QR_GTAG_MESSAGE_SOURCE }
 
 /**
  * Wait for the GTM-free collector iframe `event_callback` (via postMessage)
- * before `/qr` redirects. Same budget as the old parent-page gtag wait.
+ * before `/qr` redirects. A timeout does not mark the scan sent, so the
+ * homepage beacon can still replay that one event.
  */
-export const QR_ANALYTICS_READY_TIMEOUT_MS = 8000
+export const QR_ANALYTICS_READY_TIMEOUT_MS = 4000
+/** Homepage replay call-site budget. The iframe timer itself is `QR_REDIRECT_HOLD_MS`. */
 export const QR_HOME_BEACON_WAIT_MS = 8000
 /** Alias used by tests: redirect hold is the iframe callback wait. */
 export const QR_REDIRECT_HOLD_MS = QR_ANALYTICS_READY_TIMEOUT_MS
-/** Keep the collector iframe alive after event_callback so collect can leave. */
-export const QR_COLLECT_FLUSH_MS = 800
+/**
+ * After `event_callback`, the keepalive collect has already left (typically
+ * 5–25 ms earlier). Keep the iframe mounted briefly so navigation does not
+ * abort it, then redirect.
+ */
+export const QR_COLLECT_FLUSH_MS = 150
 /** Same-origin GTM-free collector. Live `/qr-gtag` already emits `en=qr_letak`. */
 export const QR_GTAG_COLLECT_PATH = "/qr-gtag"
 
