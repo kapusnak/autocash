@@ -1,6 +1,20 @@
 /** postMessage `source` from the GTM-free collector document. */
 export const QR_GTAG_MESSAGE_SOURCE = "autocash-qr-gtag"
 
+/** Origins the collector hits: gtag.js, then the GA4 collect endpoint. */
+export const QR_GTAG_PRECONNECT_ORIGINS = [
+  "https://www.googletagmanager.com",
+  "https://www.google-analytics.com",
+] as const
+
+/** `<link rel="dns-prefetch">` plus `<link rel="preconnect">` for each collector origin. */
+export function qrGtagPreconnectMarkup(): string {
+  return QR_GTAG_PRECONNECT_ORIGINS.map(
+    (href) =>
+      `<link rel="dns-prefetch" href="${href}">\n<link rel="preconnect" href="${href}">`,
+  ).join("\n")
+}
+
 /** `https://www.googletagmanager.com/gtag/js?id=G-…` on the default dataLayer. */
 export function gaGtagJsSrc(measurementId: string): string {
   const params = new URLSearchParams({ id: measurementId.trim() })
@@ -72,6 +86,7 @@ export function qrGtagDocument(options: {
 <head>
 <meta charset="utf-8">
 <title>${eventName}</title>
+${qrGtagPreconnectMarkup()}
 <script>
 (function(){
   var payload = ${JSON.stringify(payload)};
@@ -109,7 +124,6 @@ export function qrGtagDocument(options: {
     campaign_medium: payload.campaign.medium,
     campaign_name: payload.campaign.name,
     send_to: payload.measurementId,
-    transport_type: "beacon",
     event_callback: function(){ notify(true); }
   });
   setTimeout(function(){ notify(false); }, payload.callbackTimeoutMs);
