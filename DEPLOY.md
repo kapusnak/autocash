@@ -48,7 +48,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 
 Hodnotu vložte do Railway Variables a po deployi ten URL uložte do WhatsApp / poznámek. Rotace = nová hodnota + redeploy. Bez této proměnné sdílený odkaz nefunguje (ukáže „odkaz už neplatí“); poptávky po leadu (`PHOTO_TOKEN_SECRET`) fungují dál.
 
-Lokální zkouška: stejnou hodnotu do `.env.local`, `npm run dev`, otevřít `http://localhost:3000/fotky/<secret>`, nahrát 6 fotek (jméno / telefon / poznámka můžou zůstat prázdné), zkontrolovat mail na `LEAD_NOTIFY_TO` — předmět obsahuje **„sdílený odkaz“**, ne kód `AC-XXXX`.
+Lokální zkouška: stejnou hodnotu do `.env.local`, `npm run dev`, otevřít `http://localhost:3000/fotky/<secret>`, nahrát 9 fotek (jméno / telefon / poznámka můžou zůstat prázdné), zkontrolovat mail na `LEAD_NOTIFY_TO` — předmět obsahuje **„sdílený odkaz“**, ne kód `AC-XXXX`.
 
 Po cutoveru z Railway odstraňte `NEXT_PUBLIC_EMAILJS_*`. Bez rebuildu by se staré klíče stejně inlinovaly.
 
@@ -59,8 +59,8 @@ Po cutoveru z Railway odstraňte `NEXT_PUBLIC_EMAILJS_*`. Bez rebuildu by se sta
 - [ ] Calculator → mail na `LEAD_NOTIFY_TO` včetně IP
 - [ ] Popup + CTA → callback mail
 - [ ] Calculator s e-mailem → klientské potvrzení s odkazem na fotky
-- [ ] `/fotky/…` wizard po leadu (HMAC) → 6 fotek → jeden mail s 6 přílohami a kódem AC-XXXX
-- [ ] Sdílený odkaz `/fotky/<PHOTO_WIZARD_SHARE_SECRET>` → 6 fotek + volitelné jméno/telefon/poznámka → mail „sdílený odkaz“
+- [ ] `/fotky/…` wizard po leadu (HMAC) → 9 fotek → jeden mail s 9 přílohami a kódem AC-XXXX
+- [ ] Sdílený odkaz `/fotky/<PHOTO_WIZARD_SHARE_SECRET>` → 9 fotek + volitelné jméno/telefon/poznámka → mail „sdílený odkaz“
 - [ ] Pop-up po ~12 s
 - [ ] Cookie lišta
 - [ ] `/jak-to-funguje`, `/kontakty`, GDPR, cookies

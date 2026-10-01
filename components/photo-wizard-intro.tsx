@@ -6,13 +6,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { PhotoWizard } from "@/components/photo-wizard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { PHOTO_SLOTS } from "@/lib/photo-slots"
 
 type WizardVariant = "lead" | "share"
 
 const SLIDES = [
   {
     title: "Pojďme vyfotit vaše auto",
-    body: "Vítejte. Rychle zdokumentujeme váš vůz. Stačí se držet průvodce — celkem 6 fotek.",
+    body: `Vítejte. Rychle zdokumentujeme váš vůz. Stačí se držet průvodce — celkem ${PHOTO_SLOTS.length} fotek.`,
   },
   {
     title: "Volný prostor kolem auta",
