@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 
+import { PHOTO_SLOT_LABELS, PHOTO_SLOTS } from "./photo-slots.ts"
 import {
   PHOTO_SHARE_SECRET_MIN_LENGTH,
   PHOTO_WIZARD_SHARE_SECRET_ENV,
@@ -140,4 +141,15 @@ test("share email subject is distinct from post-lead AC-XXXX subjects", () => {
   assert.match(anonymous.text, /Jméno: —/)
   assert.match(anonymous.text, /Telefon: —/)
   assert.match(anonymous.text, /Poznámka: —/)
+  assert.match(anonymous.text, /Přílohy|Přiložené fotky/)
+  assert.match(anonymous.html, new RegExp(`Přílohy \\(${PHOTO_SLOTS.length}\\)`))
+  let cursor = anonymous.text.indexOf("Přiložené fotky:")
+  assert.ok(cursor >= 0)
+  for (const slot of PHOTO_SLOTS) {
+    const label = PHOTO_SLOT_LABELS[slot]
+    const at = anonymous.text.indexOf(label, cursor)
+    assert.ok(at > cursor, `missing slot label ${label}`)
+    cursor = at + label.length
+    assert.match(anonymous.html, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
+  }
 })

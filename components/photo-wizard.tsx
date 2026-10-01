@@ -65,13 +65,30 @@ function whatsappHref(code: string, variant: WizardVariant): string {
 
 function SlotSilhouette({ slot }: { slot: PhotoSlot }) {
   const common = "h-28 w-full text-primary/80"
-  if (slot === "interior") {
+  if (slot === "interiorFront" || slot === "interiorRear") {
+    const rear = slot === "interiorRear"
     return (
       <svg viewBox="0 0 160 90" className={common} aria-hidden>
         <rect x="18" y="22" width="124" height="48" rx="6" fill="currentColor" opacity="0.12" />
-        <rect x="28" y="30" width="48" height="22" rx="3" fill="currentColor" opacity="0.28" />
-        <rect x="84" y="30" width="48" height="22" rx="3" fill="currentColor" opacity="0.28" />
-        <rect x="36" y="58" width="88" height="8" rx="2" fill="currentColor" opacity="0.35" />
+        <rect x="28" y="30" width="48" height="22" rx="3" fill="currentColor" opacity={rear ? 0.18 : 0.28} />
+        <rect x="84" y="30" width="48" height="22" rx="3" fill="currentColor" opacity={rear ? 0.18 : 0.28} />
+        <rect x="36" y={rear ? 36 : 58} width="88" height={rear ? 28 : 8} rx="2" fill="currentColor" opacity="0.35" />
+      </svg>
+    )
+  }
+  if (slot === "tpFront" || slot === "tpRear") {
+    return (
+      <svg viewBox="0 0 160 90" className={common} aria-hidden>
+        <rect x="46" y="12" width="68" height="66" rx="4" fill="currentColor" opacity="0.12" />
+        <rect x="54" y="20" width="52" height="8" rx="1" fill="currentColor" opacity="0.35" />
+        <rect x="54" y="34" width="40" height="4" rx="1" fill="currentColor" opacity="0.28" />
+        <rect x="54" y="42" width="46" height="4" rx="1" fill="currentColor" opacity="0.28" />
+        <rect x="54" y="50" width="34" height="4" rx="1" fill="currentColor" opacity="0.28" />
+        {slot === "tpRear" ? (
+          <rect x="54" y="60" width="52" height="8" rx="1" fill="currentColor" opacity="0.35" />
+        ) : (
+          <rect x="86" y="58" width="20" height="12" rx="1" fill="currentColor" opacity="0.35" />
+        )}
       </svg>
     )
   }
@@ -425,7 +442,7 @@ export function PhotoWizard({
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Krok {stepIndex + 1} / {PHOTO_SLOTS.length}
           </p>
-          <h1 className="font-display text-2xl font-bold mt-1">{PHOTO_SLOT_TITLES[slot]}</h1>
+          <h1 className="font-display text-2xl font-bold mt-1 text-balance">{PHOTO_SLOT_TITLES[slot]}</h1>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{PHOTO_SLOT_HINTS[slot]}</p>
         </div>
 

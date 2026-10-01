@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Cookie, FileText } from "lucide-react"
 
 import { Header } from "@/components/header"
+import { PHOTO_ANGLES_COPY } from "@/lib/photo-slots"
 import { SITE } from "@/lib/site"
 
 export const metadata: Metadata = {
@@ -54,8 +55,8 @@ export default function OchranaOsobnichUdajuPage() {
               <li>VIN (nepovinné)</li>
               <li>Požadovaná částka</li>
               <li>
-                Fotografie vozu (zepředu, zezadu, z boku, interiér, nákladový prostor, nastartovaný vůz se stavem
-                km) — na fotkách může být vidět registrační značka
+                Fotografie vozu ({PHOTO_ANGLES_COPY}) — na fotkách může být vidět registrační značka a údaje z
+                technického průkazu
               </li>
             </ul>
 
