@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google"
 import { AppToaster } from "@/components/app-toaster"
+import { BottomChrome } from "@/components/bottom-chrome"
 import { FormularHashScroll } from "@/components/formular-hash-scroll"
 import { GoogleAdsGtag } from "@/components/google-ads-gtag"
 import { GoogleAnalytics } from "@/components/google-analytics"
@@ -75,6 +76,7 @@ export default function RootLayout({
         <GoogleAdsGtag />
         <GoogleAnalytics />
         <FormularHashScroll />
+        <BottomChrome />
         {children}
         <SeznamRetargeting />
         <AppToaster />

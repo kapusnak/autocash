@@ -1,6 +1,5 @@
 import { Header } from "@/components/header"
 import { HomeHero } from "@/components/home-hero"
-import { BottomChrome } from "@/components/bottom-chrome"
 import { QrLetakHomeBeacon } from "@/components/qr-letak-home-beacon"
 import { ProcessRail } from "@/components/process-rail"
 import { StayVsChange } from "@/components/stay-vs-change"
@@ -12,7 +11,6 @@ export default function Home() {
   return (
     <main className="min-h-dvh flex flex-col">
       <QrLetakHomeBeacon />
-      <BottomChrome />
       <Header />
       <HomeHero />
 
