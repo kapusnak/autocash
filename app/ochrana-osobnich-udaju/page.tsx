@@ -21,7 +21,7 @@ export default function OchranaOsobnichUdajuPage() {
           <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
             Prohlášení o ochraně osobních údajů
           </h1>
-          <p className="text-white/80 text-sm md:text-base">Datum účinnosti: 7. května 2026</p>
+          <p className="text-white/80 text-sm md:text-base">Datum účinnosti: 21. 10. 2026</p>
         </div>
       </section>
 
@@ -59,20 +59,57 @@ export default function OchranaOsobnichUdajuPage() {
                 technického průkazu
               </li>
             </ul>
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Z veřejně dostupných zdrojů a veřejných rejstříků můžeme dále zpracovávat základní identifikační a
+              adresní údaje pro zaslání nabídky našich služeb poštou, zejména:
+            </p>
+            <ul className="list-disc pl-6 text-base text-muted-foreground leading-relaxed space-y-2 mb-6">
+              <li>Jméno a příjmení</li>
+              <li>Adresa</li>
+            </ul>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
               3. Jak vaše údaje získáváme
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Vaše osobní údaje získáváme prostřednictvím webového formuláře, nahrání fotografií vozu po odeslání
-              poptávky a telefonních poptávek na našich stránkách.
+              poptávky a telefonních poptávek na našich stránkách a dále z veřejně dostupných zdrojů a veřejných
+              rejstříků.
             </p>
 
+            <h2
+              id="postovni-nabidky"
+              className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4"
+            >
+              4. Poštovní nabídky a veřejně dostupné zdroje
+            </h2>
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Základní identifikační a adresní údaje získané z veřejně dostupných zdrojů a veřejných rejstříků můžeme v
+              případech, kdy jsou splněny zákonné podmínky, zpracovávat také za účelem zaslání nabídky našich služeb
+              poštou. Jedná se zejména o jméno, příjmení a adresu. Právním základem zpracování je oprávněný zájem
+              správce na přímém marketingu dle čl. 6 odst. 1 písm. f) GDPR.
+            </p>
+            <div className="rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 md:px-6 md:py-5 mb-6">
+              <p className="text-base font-bold text-foreground leading-relaxed">
+                Máte právo kdykoliv a bezplatně vznést námitku proti zpracování osobních údajů pro účely přímého
+                marketingu. Po uplatnění námitky nebudou vaše osobní údaje pro tento účel dále zpracovávány.
+              </p>
+              <p className="text-base font-medium text-foreground leading-relaxed mt-3">
+                Námitku můžete uplatnit e-mailem na{" "}
+                <a href={`mailto:${SITE.email}`} className="text-primary no-underline hover:underline">
+                  {SITE.email}
+                </a>{" "}
+                nebo dopisem na adresu správce {SITE.controller.address}.
+              </p>
+            </div>
+
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              4. Účely a právní základ zpracování
+              5. Účely a právní základ zpracování
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Vaše údaje slouží k posouzení poptávky a přípravě nabídky na služby zajištěného financování vozidly.
+              Základní údaje z veřejně dostupných zdrojů můžeme také zpracovávat za účelem zaslání nabídky našich
+              služeb poštou.
             </p>
             <ul className="list-disc pl-6 text-base text-muted-foreground leading-relaxed space-y-2 mb-6">
               <li>
@@ -83,10 +120,14 @@ export default function OchranaOsobnichUdajuPage() {
                 čl. 6 odst. 1 písm. f) GDPR — oprávněný zájem Provozovatele na komunikaci se zákazníkem a zajištění
                 provozu služeb.
               </li>
+              <li>
+                čl. 6 odst. 1 písm. f) GDPR — oprávněný zájem správce na přímém marketingu (zaslání nabídky služeb
+                poštou).
+              </li>
             </ul>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              5. Předání osobních údajů třetím stranám
+              6. Předání osobních údajů třetím stranám
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Pro účely posouzení poptávky a přípravy nabídky můžeme vaše
@@ -96,21 +137,29 @@ export default function OchranaOsobnichUdajuPage() {
               rámci komunikace ohledně vaší poptávky.
             </p>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Příjemci jsou také poskytovatelé poštovních a doručovacích služeb, zejména Česká pošta, s.p., v rozsahu
+              jméno, příjmení a adresa, výhradně za účelem doručení zásilek s nabídkou našich služeb.
+            </p>
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Kromě výše uvedeného mohou být údaje předány také poskytovatelům technických a provozních služeb
               (hosting, e-mailové nástroje, analytika). Údaje dále předáváme jen tehdy, když nám to ukládá zákon nebo
-              rozhodnutí veřejné moci.
+              rozhodnutí veřejné moci. Osobní údaje nepředáváme mimo EU/EHP kromě případů v souladu s kapitolou V GDPR.
             </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              6. Doba uchování údajů
+              7. Doba uchování údajů
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Osobní údaje jsou uchovávány po dobu nezbytně nutnou ke zpracování nabídky a komunikaci s klientem,
               nejdéle však po dobu 6 měsíců, pokud nebude zahájena smluvní spolupráce.
             </p>
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Údaje z veřejně dostupných zdrojů jsou uchovávány po dobu nezbytně nutnou ke zprostředkování nabídky a
+              komunikaci s klientem, nejdéle však po dobu 6 měsíců, pokud nebude zahájena smluvní spolupráce.
+            </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              7. Cookies a online sledování
+              8. Cookies a online sledování
             </h2>
             <ul className="list-disc pl-6 text-base text-muted-foreground leading-relaxed space-y-2 mb-6">
               <li>Analytické cookies — Google Analytics (sledování návštěvnosti).</li>
@@ -126,14 +175,14 @@ export default function OchranaOsobnichUdajuPage() {
             </p>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              8. Zabezpečení údajů
+              9. Zabezpečení údajů
             </h2>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
               Přijali jsme odpovídající technická a organizační opatření, aby vaše údaje byly v bezpečí a nebyly
               zneužity, ztraceny nebo neoprávněně zpřístupněny.
             </p>
 
-            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">9. Vaše práva</h2>
+            <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">10. Vaše práva</h2>
             <ul className="list-disc pl-6 text-base text-muted-foreground leading-relaxed space-y-2 mb-6">
               <li>právo na přístup k osobním údajům,</li>
               <li>právo na opravu nepřesných údajů,</li>
@@ -144,7 +193,7 @@ export default function OchranaOsobnichUdajuPage() {
             </ul>
 
             <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mt-12 mb-4">
-              10. Kontakt na Provozovatele
+              11. Kontakt na Provozovatele
             </h2>
             <ul className="list-none pl-0 text-base text-muted-foreground leading-relaxed space-y-2">
               <li>
